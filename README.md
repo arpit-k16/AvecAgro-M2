@@ -11,7 +11,9 @@ AvecAgro is an AI farming assistant for small and marginal farmers in India. A f
 
 ## Prototype
 
-**Live app:** https://claude.ai/artifact/SS1SXmKDuY4BjQYXdUaxXp
+**Live app:** https://claude.ai/artifact/SS1SXmKDuY4BjQYXdUaxXp  
+**Repository:** https://github.com/arpit-k16/AvecAgro-M2  
+**Reel:** `docs/reel/AvecAgro_M2_Reel.mp4` (127 s)
 Open it while signed in to Claude (a free account works) and click **Allow use of Claude** when asked. Tabs:
 
 - **Advisor** – type farm details or click an example, then *Get advice*.

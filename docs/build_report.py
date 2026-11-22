@@ -191,7 +191,7 @@ h += """<h2>Known limitations and what we will try next</h2>
 # ---------- Section 5 ----------
 h += f"""<h1>5. Repository</h1>
 <p>Repository / folder link: <b>{esc(links['repository'])}</b></p>
-{img("docs/screenshots/repo_tree.png", "88%")}<div class="cap">Repository structure (prompts/v1–v3 and final, code, test-data, docs, README, CHANGELOG).</div>
+<div style="display:flex;gap:12px;align-items:flex-start"><div style="flex:1">{img("docs/screenshots/github_repo.jpg", "100%")}<div class="cap">The public GitHub repository (22 Nov 2026).</div></div><div style="flex:1.2">{img("docs/screenshots/repo_tree.png", "100%")}<div class="cap">Folder structure inside the repository.</div></div></div>
 <h2>What changed since Milestone 1</h2>
 <ul><li>Added <code>prompts/v1–v3</code> (P2 iterations) and <code>prompts/final</code> (P1–P4), one file per prompt.</li>
 <li>Added <code>code/</code>: web app source, 27-passage knowledge base for retrieval, and the build script that embeds the prompts.</li>
