@@ -15,7 +15,7 @@ Every number below matches the Milestone 2 PDF.
 | 9 | Main AI tool and model | Claude (Anthropic) in a custom web app via the Claude artifact runtime |
 | 10 | Number of prompts | 4 |
 | 11 | Prototype link | https://claude.ai/artifact/SS1SXmKDuY4BjQYXdUaxXp (must be shared publicly first – see checklist) |
-| 12 | Repository / folder link | your GitHub repo or Drive folder link |
+| 12 | Repository / folder link | https://github.com/arpit-k16/AvecAgro-M2 |
 | 13 | Reel link | your Drive / unlisted YouTube link |
 | 14 | Reel length (seconds) | 127 |
 | 15 | Supporting document type | Business Model Canvas (BMC) |
@@ -32,7 +32,7 @@ Every number below matches the Milestone 2 PDF.
 ## Checklist before submitting (about 10 minutes)
 
 1. **Share the prototype**: open the artifact link → Share → make it viewable by anyone with the link. Test it in an incognito window (it should open after a Claude sign-in, with no access request).
-2. **Upload the repository**: upload this whole `AvecAgro-M2` folder to a new public GitHub repo (or a Google Drive folder set to "Anyone with the link can view").
+2. **Repository**: done – https://github.com/arpit-k16/AvecAgro-M2 (public).
 3. **Upload the reel**: `docs/reel/AvecAgro_M2_Reel.mp4` to Drive ("Anyone with the link") or YouTube (unlisted).
 4. **Put the two links in the PDF**: send them to Claude to regenerate the PDF, or edit `docs/links.json` and run `python docs/build_report.py`.
 5. Test every link in incognito, then submit the form once.
