@@ -11,10 +11,10 @@ const GEMINI = process.env.GEMINI_API_KEY || '';
 const ANTHROPIC = process.env.ANTHROPIC_API_KEY || '';
 const PROVIDER = GROQ ? 'groq' : GEMINI ? 'gemini' : ANTHROPIC ? 'anthropic' : '';
 const KEY = GROQ || GEMINI || ANTHROPIC;
-const MODEL = process.env.MODEL || { groq: 'llama-3.3-70b-versatile', gemini: 'gemini-2.5-flash', anthropic: 'claude-sonnet-5-5' }[PROVIDER] || '';
-const FALLBACK_MODEL = process.env.FALLBACK_MODEL || (PROVIDER === 'groq' ? 'openai/gpt-oss-120b' : '');
+const MODEL = process.env.MODEL || { groq: 'openai/gpt-oss-120b', gemini: 'gemini-2.5-flash', anthropic: 'claude-sonnet-5-5' }[PROVIDER] || '';
+const FALLBACK_MODEL = process.env.FALLBACK_MODEL || (PROVIDER === 'groq' ? 'llama-3.1-8b-instant' : '');
 const runLog = []; // recent test/lab results posted by the page (kept in memory, newest last)
-const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '4000', 10);
+const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '8000', 10);
 const LIMIT_PER_HOUR = parseInt(process.env.LIMIT_PER_HOUR || '120', 10); // AI calls per visitor IP per hour
 const PAGE = path.join(__dirname, '..', 'code', 'index.html');
 
@@ -51,7 +51,7 @@ function toMessages(input) {
 async function callGroq(messages, model) {
   const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST', headers: { authorization: 'Bearer ' + GROQ, 'content-type': 'application/json' },
-    body: JSON.stringify({ model, messages, max_tokens: MAX_TOKENS, temperature: 0.2 })
+    body: JSON.stringify(Object.assign({ model, messages, max_tokens: MAX_TOKENS, temperature: 0.2 }, /gpt-oss/.test(model) ? { reasoning_effort: 'low' } : {}))
   });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) { const e = new Error((j.error && j.error.message) || `Groq error ${r.status}`); e.status = r.status; throw e; }
