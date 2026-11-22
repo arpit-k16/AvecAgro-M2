@@ -1,0 +1,13 @@
+digraph T { rankdir=LR;
+#include
+labelloc=t; label="Figure 2. Task decomposition"; fontsize=14;
+root [label="Give a small farmer\nsafe, personalised\nfarming guidance", fillcolor="#e0ecf4"];
+a [label="1. Understand the farm\n(P1)", fillcolor="#e3efd9"]; b [label="2. Find trusted facts\n(Retrieval)", fillcolor="#ffffff"];
+c [label="3. Choose crops\n(P2)", fillcolor="#e3efd9"]; d [label="4. Plan the season\n(P3)", fillcolor="#e3efd9"]; e [label="5. Protect the crop\n(P4)", fillcolor="#e3efd9"];
+a1 [label="extract fields · detect language\nvalidate input · flag impossible /\ncontradictory sensor data · ask\nclarifying questions"];
+b1 [label="score 27 KB passages by\nstate, season, crop, topic\n→ top-k passages with ids"];
+c1 [label="match season/region/water/budget\nmeasured vs estimated soil\ncite KB ids · confidence"];
+d1 [label="week-wise tasks · irrigation\nfrom sensor + rain forecast\nnutrients via Soil Health Card"];
+e1 [label="likely pests + evidence · alert\nlevel · IPM order · no doses ·\ndrone suitability · expert contact"];
+root -> {a b c d e}; a -> a1; b -> b1; c -> c1; d -> d1; e -> e1;
+}

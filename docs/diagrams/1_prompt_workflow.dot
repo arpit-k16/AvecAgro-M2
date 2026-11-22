@@ -1,0 +1,20 @@
+digraph W { rankdir=TB;
+#include
+labelloc=t; label="Figure 1. AVECAGRO prompt workflow (4 prompts + retrieval + routing)"; fontsize=14;
+in [label="Farmer input\n(free text: EN / HI / Hinglish,\nsoil report, weather, sensor/drone notes)", fillcolor="#e0ecf4"];
+p1 [label="P1 Intake & Validation\n→ structured profile JSON,\nvalidity, warnings, missing fields", fillcolor="#e3efd9"];
+g1 [label="is_valid?\nin_india?", shape=diamond, fillcolor="#fbf0d9"];
+stop [label="Stop: ask for farm details /\nout-of-region message", fillcolor="#f8e1dc"];
+route [label="Route by profile", shape=diamond, fillcolor="#fbf0d9"];
+r2 [label="Retrieve top-6 KB passages\n(state, season, crops, keywords)", fillcolor="#ffffff"];
+p2 [label="P2 Crop Recommendation\n(3 crops + KB citations,\nsoil status, confidence)", fillcolor="#e3efd9"];
+r3 [label="Retrieve top-5 passages\n(+KB-22 irrigation/weather)", fillcolor="#ffffff"];
+p3 [label="P3 Farm Plan & Calendar\n(6–8 windows, irrigation,\nnutrients, weather rules)", fillcolor="#e3efd9"];
+r4 [label="Retrieve top-5 passages\n(+KB-23 IPM)", fillcolor="#ffffff"];
+p4 [label="P4 Pest Alert & Advisor\n(alert level, likely pests,\nIPM steps, drone note)", fillcolor="#e3efd9"];
+ui [label="Web app renders cards\n(farmer summary in farmer's language)", fillcolor="#e0ecf4"];
+in -> p1 -> g1; g1 -> stop [label="no"]; g1 -> route [label="yes"];
+route -> r2 [label="plan new crop"]; r2 -> p2 [label="passages"]; p2 -> r3 [label="top crop"];
+route -> r3 [label="crop standing,\nno problem"]; r3 -> p3 -> r4;
+route -> r4 [label="crop standing\n+ problem"]; r4 -> p4 -> ui;
+}

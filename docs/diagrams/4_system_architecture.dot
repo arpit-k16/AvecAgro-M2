@@ -1,0 +1,18 @@
+digraph A { rankdir=LR; compound=true;
+#include
+labelloc=t; label="Figure 4. System architecture (Milestone 2 prototype)"; fontsize=14;
+user [label="Farmer / evaluator\n(browser, signed in to Claude)", fillcolor="#e0ecf4"];
+subgraph cluster_app { label="AVECAGRO web app (single HTML page, hosted as a Claude artifact)"; style="rounded,dashed"; color="#7a8a6a";
+  ui [label="UI tabs: Advisor · Test runner ·\nPrompt lab · Prompts & KB · About"];
+  orch [label="Pipeline orchestrator (JS)\nvalidation gate · routing ·\nJSON parsing · retries"];
+  rag [label="Retriever (JS)\ntag + keyword scoring"];
+  kb [label="Embedded KB\n27 passages", shape=cylinder, fillcolor="#ffffff"];
+  pr [label="Prompt store\nP1–P4 final, P2 v1–v3", shape=folder, fillcolor="#ffffff"];
+  ui -> orch; orch -> rag -> kb; orch -> pr;
+}
+llm [label="Claude LLM\n(artifact runtime 'sample' API,\nmodel tier: default)", fillcolor="#e3efd9"];
+db [label="Artifact DB\n(test-run & lab logs)", shape=cylinder, fillcolor="#ffffff"];
+gh [label="Repository\nprompts/ code/ test-data/ docs/", shape=folder, fillcolor="#ffffff"];
+user -> ui; orch -> llm [label="prompt + vars"]; llm -> orch [label="JSON text"]; orch -> db [label="test/lab runs"];
+pr -> gh [style=dashed, label="build.py embeds\nprompts from repo", dir=back];
+}

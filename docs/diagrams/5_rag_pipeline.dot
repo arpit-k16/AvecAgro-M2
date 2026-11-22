@@ -1,0 +1,13 @@
+digraph R { rankdir=LR;
+#include
+labelloc=t; label="Figure 5. RAG pipeline"; fontsize=14;
+q [label="Query from P1 profile\nstate · season · previous crop ·\ngoal/crop · problem keywords", fillcolor="#e0ecf4"];
+s [label="Score each passage\n+3 state match (−1 other state)\n+2 season · +4 per crop match\n+0.3 per keyword (max 3)"];
+f [label="Force-include rule passages\n(KB-22 for plans, KB-23 for pests)"];
+k [label="Top-k\n(6 for P2, 5 for P3/P4)"];
+fm [label="Format as\n[KB-id] title: text"];
+p [label="Prompt (P2/P3/P4):\n'use ONLY these passages,\ncite their ids'", fillcolor="#e3efd9"];
+v [label="Check: cited ids ⊂\nretrieved ids (Prompt lab)", fillcolor="#fbf0d9"];
+kb [label="27 curated passages\n(states, seasons, crops, topics)", shape=cylinder, fillcolor="#ffffff"];
+kb -> s; q -> s -> f -> k -> fm -> p -> v;
+}

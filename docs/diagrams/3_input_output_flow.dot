@@ -1,0 +1,15 @@
+digraph IO { rankdir=LR;
+#include
+labelloc=t; label="Figure 3. Input–output flow (data passed between steps)"; fontsize=14;
+i [label="{farmer_input}\n{today}", shape=note, fillcolor="#e0ecf4"];
+p1 [label="P1", fillcolor="#e3efd9"]; prof [label="profile JSON\n(state, season, soil{…, source},\nsensor_readings, language,\nobserved_problems, warnings)", shape=note];
+kb [label="knowledge_base.json\n27 passages", shape=cylinder, fillcolor="#ffffff"];
+ret [label="retrieve()", fillcolor="#ffffff"]; ch [label="{retrieved_chunks}\n[KB-03] … [KB-22] …", shape=note];
+p2 [label="P2", fillcolor="#e3efd9"]; o2 [label="recommendations[3]\nsoil_assessment\nconfidence, farmer_summary", shape=note];
+p3 [label="P3", fillcolor="#e3efd9"]; o3 [label="plan[6–8]\nweather_adjustments\nwater/budget tips", shape=note];
+p4 [label="P4", fillcolor="#e3efd9"]; o4 [label="alert_level, likely_issues\nIPM steps, do_not,\ndrone note, expert", shape=note];
+ui [label="Farmer-facing cards\n+ raw JSON", fillcolor="#e0ecf4"];
+i -> p1 -> prof; prof -> ret; kb -> ret -> ch;
+prof -> p2; ch -> p2 -> o2; o2 -> p3 [label="{crop}"]; prof -> p3; p3 -> o3; prof -> p4; p4 -> o4;
+o2 -> ui; o3 -> ui; o4 -> ui;
+}

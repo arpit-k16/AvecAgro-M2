@@ -1,0 +1,271 @@
+{
+ "run_at": "2026-11-22, AVECAGRO Prompt lab",
+ "inputs": "tests 1,2,4,7,14 (+2 repeats of test 1)",
+ "rows": [
+  {
+   "version": "v1",
+   "test": 1,
+   "rep": 1,
+   "strict_json": false,
+   "parseable": false,
+   "n_crops": null,
+   "valid_kb_citations": false,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v1",
+   "test": 1,
+   "rep": 2,
+   "strict_json": false,
+   "parseable": false,
+   "n_crops": null,
+   "valid_kb_citations": false,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v1",
+   "test": 1,
+   "rep": 3,
+   "strict_json": false,
+   "parseable": false,
+   "n_crops": null,
+   "valid_kb_citations": false,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v2",
+   "test": 1,
+   "rep": 1,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v2",
+   "test": 1,
+   "rep": 2,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v2",
+   "test": 1,
+   "rep": 3,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v3",
+   "test": 1,
+   "rep": 1,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v3",
+   "test": 1,
+   "rep": 2,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v3",
+   "test": 1,
+   "rep": 3,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v1",
+   "test": 2,
+   "rep": 1,
+   "strict_json": false,
+   "parseable": false,
+   "n_crops": null,
+   "valid_kb_citations": false,
+   "invented_soil_numbers": "n/a",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v2",
+   "test": 2,
+   "rep": 1,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "n/a",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v3",
+   "test": 2,
+   "rep": 1,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "n/a",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v1",
+   "test": 4,
+   "rep": 1,
+   "strict_json": false,
+   "parseable": false,
+   "n_crops": null,
+   "valid_kb_citations": false,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v2",
+   "test": 4,
+   "rep": 1,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": false,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v3",
+   "test": 4,
+   "rep": 1,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v1",
+   "test": 7,
+   "rep": 1,
+   "strict_json": false,
+   "parseable": false,
+   "n_crops": null,
+   "valid_kb_citations": false,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": true
+  },
+  {
+   "version": "v2",
+   "test": 7,
+   "rep": 1,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 2,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": true
+  },
+  {
+   "version": "v3",
+   "test": 7,
+   "rep": 1,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 2,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": true
+  },
+  {
+   "version": "v1",
+   "test": 14,
+   "rep": 1,
+   "strict_json": false,
+   "parseable": false,
+   "n_crops": null,
+   "valid_kb_citations": false,
+   "invented_soil_numbers": "YES",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v2",
+   "test": 14,
+   "rep": 1,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  },
+  {
+   "version": "v3",
+   "test": 14,
+   "rep": 1,
+   "strict_json": true,
+   "parseable": true,
+   "n_crops": 3,
+   "valid_kb_citations": true,
+   "invented_soil_numbers": "none",
+   "hinglish_ok": null
+  }
+ ],
+ "summary": {
+  "v1": {
+   "strict_json": "0/7",
+   "exactly_3_crops": "0/7",
+   "valid_citations": "0/7",
+   "no_invented_soil_numbers": "5/6",
+   "top_crop_test1_x3": "free text (first crop mentioned: soybean/soybean/wheat)",
+   "avg_chars": 4260,
+   "avg_s": 16.7
+  },
+  "v2": {
+   "strict_json": "7/7",
+   "exactly_3_crops": "6/7",
+   "valid_citations": "6/7",
+   "no_invented_soil_numbers": "6/6",
+   "top_crop_test1_x3": "chickpea x3",
+   "avg_chars": 4721,
+   "avg_s": 12.6
+  },
+  "v3": {
+   "strict_json": "7/7",
+   "exactly_3_crops": "6/7",
+   "valid_citations": "7/7",
+   "no_invented_soil_numbers": "6/6",
+   "top_crop_test1_x3": "chickpea x3",
+   "avg_chars": 2705,
+   "avg_s": 7.9
+  },
+  "notes": [
+   "v1 test 14 gave an invented fertiliser dose '120:60:40 kg N:P2O5:K2O per hectare' and variety names (MP 1202, HI 1544, HI 8498, HI 8663) that are in no source passage.",
+   "v2 test 4 cited KB-16 for maize although KB-16 was not among the retrieved passages (and said so in its own risks).",
+   "Test 7 gives 2 crops in v2/v3 because only 2 retrieved passages supported rabi crops (rule 5 in v3)."
+  ]
+ }
+}
