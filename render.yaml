@@ -7,9 +7,9 @@ services:
     startCommand: node server/server.js
     healthCheckPath: /api/health
     envVars:
-      - key: ANTHROPIC_API_KEY
+      - key: GROQ_API_KEY
         sync: false
       - key: MODEL
-        value: claude-sonnet-5-5
+        value: llama-3.3-70b-versatile
       - key: LIMIT_PER_HOUR
         value: "120"

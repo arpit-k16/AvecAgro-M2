@@ -221,9 +221,9 @@ async function serverSample(input, opts) {
   try { if (window.claude && claude.use) sample = await claude.use('sample'); } catch (e) {}
   let where = 'Connected to Claude';
   if (!sample) {
-    try { const h = await (await fetch('/api/health')).json(); if (h.ok) { sample = serverSample; where = 'Connected to Claude (' + h.model + ')'; } } catch (e) {}
+    try { const h = await (await fetch('/api/health')).json(); if (h.ok) { sample = serverSample; where = 'AI connected: ' + h.model; } } catch (e) {}
   }
-  $('#status').textContent = sample ? where : 'AI is not connected on this server';
+  $('#status').textContent = sample ? where : 'AI is not connected yet';
   $('#status').classList.toggle('ok', !!sample);
   try { if (window.claude && claude.use) db = await claude.use('db'); } catch (e) {}
 })();
@@ -438,6 +438,7 @@ async function runTest(no) {
     T.test_no = no; RESULTS[no] = T;
     $('#tdout').innerHTML = renderTrace(T);
     $('#ts' + no).textContent = autoSummary(T);
+    if (!db && sample === serverSample) { try { await fetch('/api/log', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({kind:'test', no, summary: autoSummary(T), trace: T})}); } catch (e) {} }
     if (db) { try { await db.doc('runs/test-' + String(no).padStart(2, '0')).set({no, type: t.type, input: t.input, summary: autoSummary(T), trace: JSON.stringify(T), at: new Date().toISOString()}); } catch (e) { console.log('db', e); } }
   } catch (e) { $('#ts' + no).textContent = 'ERROR: ' + (e.message || e.code || e); }
 }
@@ -502,6 +503,7 @@ $('#runlab').onclick = async () => {
         const r = await callLLM('P2_' + ver, {farmer_input: t.input, profile_json: JSON.stringify(prof), retrieved_chunks: fmtChunks(ch), output_language: lang});
         const row = {ver, no, rep, text: r.text, ms: r.ms, model: r.model, retrieved: ids, m: metrics(ver, no, r.text, prof, ids)};
         LAB.push(row); drawLab();
+        if (!db && sample === serverSample) { try { await fetch('/api/log', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({kind:'lab', ver, no, rep, ms: r.ms, model: r.model, metrics: row.m, text: r.text})}); } catch (e) {} }
         if (db) { try { await db.doc(`lab/${ver}-t${no}-r${rep}`).set({ver, no, rep, text: r.text, ms: r.ms, model: r.model || '', retrieved: ids.join(','), metrics: JSON.stringify(row.m), profile: JSON.stringify(prof), at: new Date().toISOString()}); } catch (e) { console.log('db', e); } }
       }
     }

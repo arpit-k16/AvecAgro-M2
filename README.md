@@ -23,11 +23,11 @@ Open it while signed in to Claude (a free account works) and click **Allow use o
 
 ## Deploy on Render
 
-The repo includes `render.yaml` and a dependency-free Node server (`server/server.js`) that serves the app and calls Claude through the Anthropic API.
+The repo includes `render.yaml` and a dependency-free Node server (`server/server.js`) that serves the app and calls the AI through Groq (open-source Llama models).
 
 1. On render.com: **New → Blueprint** (or **Web Service**) and pick this repo. Start command: `node server/server.js`.
-2. In the service's **Environment** tab set `ANTHROPIC_API_KEY` (your own key; it is never stored in the repo). Optional: `MODEL` (default `claude-sonnet-5-5`), `LIMIT_PER_HOUR` (default 120 AI calls per visitor IP).
-3. Open the Render URL: the status pill shows "Connected to Claude" when the key works.
+2. In the service's **Environment** tab set `GROQ_API_KEY` (free key from console.groq.com; never stored in the repo). Optional: `MODEL` (default `llama-3.3-70b-versatile`; `GEMINI_API_KEY` or `ANTHROPIC_API_KEY` also work), `LIMIT_PER_HOUR` (default 120 AI calls per visitor IP).
+3. Open the Render URL: the status pill shows "AI connected" when the key works.
 
 ## How it works
 
