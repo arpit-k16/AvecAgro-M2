@@ -21,6 +21,14 @@ Open it while signed in to Claude (a free account works) and click **Allow use o
 - **Prompt lab** – runs P2 versions v1, v2 and v3 on the same inputs and computes metrics.
 - **Prompts & knowledge base** – shows the final prompts and all 27 knowledge-base passages.
 
+## Deploy on Render
+
+The repo includes `render.yaml` and a dependency-free Node server (`server/server.js`) that serves the app and calls Claude through the Anthropic API.
+
+1. On render.com: **New → Blueprint** (or **Web Service**) and pick this repo. Start command: `node server/server.js`.
+2. In the service's **Environment** tab set `ANTHROPIC_API_KEY` (your own key; it is never stored in the repo). Optional: `MODEL` (default `claude-sonnet-5-5`), `LIMIT_PER_HOUR` (default 120 AI calls per visitor IP).
+3. Open the Render URL: the status pill shows "Connected to Claude" when the key works.
+
 ## How it works
 
 | Step | Prompt / component | Output |

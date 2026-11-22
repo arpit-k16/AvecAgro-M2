@@ -1,0 +1,11 @@
+{
+  "name": "avecagro",
+  "version": "2.0.0",
+  "description": "AvecAgro – AI-Powered Precision Agriculture (SCSE4041 Milestone 2)",
+  "private": true,
+  "scripts": {
+    "start": "node server/server.js",
+    "build": "python3 code/build.py"
+  },
+  "engines": { "node": ">=18" }
+}

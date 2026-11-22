@@ -21,3 +21,8 @@
 - Pipeline progress shown as a furrow of seeds that sprout as each step finishes.
 - Results renamed to Your farm / Crops to consider / Season plan / Pest watch; cost tags no longer use alarm colours; better mobile layout and keyboard focus; reduced-motion respected.
 - No change to prompts, retrieval or pipeline logic.
+
+## 2026-11-22 (night) — Render deployment
+- Added `server/server.js` (Node, no dependencies): serves the app and proxies AI calls to the Anthropic Messages API using the `ANTHROPIC_API_KEY` environment variable; per-IP hourly limit.
+- Added `render.yaml` and `package.json`.
+- The page now uses the Claude artifact runtime when opened on claude.ai, and the server's `/api/sample` endpoint elsewhere. Prompts and pipeline unchanged.

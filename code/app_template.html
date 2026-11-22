@@ -210,16 +210,28 @@ document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
 });
 
 // ---------- connect ----------
+// Inside claude.ai the artifact runtime provides Claude; on the Render deployment the page calls our own server (/api/sample).
+async function serverSample(input, opts) {
+  const r = await fetch('/api/sample', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({input})});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(j.error || ('Server error ' + r.status)); e.code = r.status === 429 ? 'rate_limited' : 'server_error'; throw e; }
+  return j;
+}
 (async () => {
   try { if (window.claude && claude.use) sample = await claude.use('sample'); } catch (e) {}
-  $('#status').textContent = sample ? 'Connected to Claude' : 'Sign in to Claude to run the advisor'; $('#status').classList.toggle('ok', !!sample);
+  let where = 'Connected to Claude';
+  if (!sample) {
+    try { const h = await (await fetch('/api/health')).json(); if (h.ok) { sample = serverSample; where = 'Connected to Claude (' + h.model + ')'; } } catch (e) {}
+  }
+  $('#status').textContent = sample ? where : 'AI is not connected on this server';
+  $('#status').classList.toggle('ok', !!sample);
   try { if (window.claude && claude.use) db = await claude.use('db'); } catch (e) {}
 })();
 
 // ---------- prompts ----------
 function fill(tpl, vars) { return tpl.replace(/\{(\w+)\}/g, (m, k) => (k in vars) ? vars[k] : m); }
 async function callLLM(pid, vars) {
-  if (!sample) throw new Error('Claude is not connected. Open this page in Claude while signed in.');
+  if (!sample) throw new Error('The AI is not connected. On claude.ai, sign in and allow Claude; on the Render site, the server needs its API key.');
   const p = D.prompts[pid];
   const user = fill(p.user, vars);
   const input = (p.system && p.system.trim() !== 'none')
