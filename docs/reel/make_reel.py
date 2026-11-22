@@ -50,5 +50,6 @@ with open('out/list.txt','w') as f:
     for o,d in lst: f.write(f"file '{os.path.basename(o)}'\nduration {d}\n")
     f.write(f"file '{os.path.basename(lst[-1][0])}'\n")
 total=sum(d for _,d in lst); print('total seconds',total)
-subprocess.run(['ffmpeg','-y','-loglevel','error','-f','concat','-safe','0','-i','out/list.txt','-f','lavfi','-i','anullsrc=r=44100:cl=stereo',
- '-vf','fps=25,format=yuv420p','-c:v','libx264','-preset','veryfast','-crf','23','-c:a','aac','-shortest','-t',str(total),'AvecAgro_M2_Reel.mp4'],check=True)
+subprocess.run(['python3','audio/make_music.py',str(total),'audio/music.wav'],check=True)
+subprocess.run(['ffmpeg','-y','-loglevel','error','-f','concat','-safe','0','-i','out/list.txt','-i','audio/music.wav',
+ '-vf','fps=25,format=yuv420p','-af','loudnorm=I=-18:TP=-2:LRA=11','-c:v','libx264','-preset','veryfast','-crf','23','-c:a','aac','-b:a','160k','-t',str(total),'AvecAgro_M2_Reel.mp4'],check=True)

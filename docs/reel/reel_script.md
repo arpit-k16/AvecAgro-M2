@@ -1,6 +1,6 @@
 # AvecAgro – Milestone 2 reel (127 seconds)
 
-File: `docs/reel/AvecAgro_M2_Reel.mp4` (1280×720, captions burned in, silent audio track).
+File: `docs/reel/AvecAgro_M2_Reel.mp4` (1280×720, captions burned in, original background music synthesised by `docs/reel/audio/make_music.py`: tanpura-style drone, chord pad, plucked melody; no third-party audio).
 Built by `docs/reel/make_reel.py` from screenshots of real runs in the published app (22 Nov 2026) and the real v1/v3 outputs saved in `test-data/`.
 Optional: a teammate can record a voice-over reading the captions below (Q14 length stays 127 s).
 
