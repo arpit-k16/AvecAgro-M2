@@ -12,7 +12,7 @@ const ANTHROPIC = process.env.ANTHROPIC_API_KEY || '';
 const PROVIDER = GROQ ? 'groq' : GEMINI ? 'gemini' : ANTHROPIC ? 'anthropic' : '';
 const KEY = GROQ || GEMINI || ANTHROPIC;
 const MODEL = process.env.MODEL || { groq: 'openai/gpt-oss-120b', gemini: 'gemini-2.5-flash', anthropic: 'claude-sonnet-5-5' }[PROVIDER] || '';
-const FALLBACK_MODEL = process.env.FALLBACK_MODEL || (PROVIDER === 'groq' ? 'llama-3.1-8b-instant' : '');
+const FALLBACK_MODEL = process.env.FALLBACK_MODEL || '';
 const runLog = []; // recent test/lab results posted by the page (kept in memory, newest last)
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '8000', 10);
 const LIMIT_PER_HOUR = parseInt(process.env.LIMIT_PER_HOUR || '120', 10); // AI calls per visitor IP per hour
@@ -54,7 +54,7 @@ async function callGroq(messages, model) {
     body: JSON.stringify(Object.assign({ model, messages, max_tokens: MAX_TOKENS, temperature: 0.2 }, /gpt-oss/.test(model) ? { reasoning_effort: 'low' } : {}))
   });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) { const e = new Error((j.error && j.error.message) || `Groq error ${r.status}`); e.status = r.status; throw e; }
+  if (!r.ok) { const e = new Error((j.error && j.error.message) || `Groq error ${r.status}`); e.status = r.status; e.retryAfter = parseFloat(r.headers.get('retry-after') || '0'); throw e; }
   const c = (j.choices || [])[0] || {};
   return { text: (c.message && c.message.content) || '', truncated: c.finish_reason === 'length', modelApplied: j.model || model };
 }
@@ -81,11 +81,14 @@ async function callAnthropic(messages, model) {
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function callAI(messages) {
   const fn = { groq: callGroq, gemini: callGemini, anthropic: callAnthropic }[PROVIDER];
-  for (let attempt = 0; attempt < 3; attempt++) {
+  let waited = 0;
+  for (let attempt = 0; ; attempt++) {
     try { return await fn(messages, MODEL); }
     catch (e) {
-      if (e.status === 429 && attempt < 2) { await sleep(6000 * (attempt + 1)); continue; }   // per-minute limit: wait and retry
-      if ((e.status === 429 || e.status === 404 || e.status === 400) && FALLBACK_MODEL) return await fn(messages, FALLBACK_MODEL);
+      // Free tiers limit tokens per minute: wait as long as the provider asks (or a growing pause), up to ~75 s in total.
+      const wait = Math.min(30, Math.max(e.retryAfter || 0, 5 * (attempt + 1))) * 1000;
+      if (e.status === 429 && waited + wait <= 75000) { waited += wait; await sleep(wait); continue; }
+      if (FALLBACK_MODEL && (e.status === 429 || e.status === 404)) return await fn(messages, FALLBACK_MODEL);
       throw e;
     }
   }
