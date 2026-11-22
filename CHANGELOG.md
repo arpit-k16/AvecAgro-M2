@@ -26,3 +26,6 @@
 - Added `server/server.js` (Node, no dependencies): serves the app and proxies AI calls to the Anthropic Messages API using the `ANTHROPIC_API_KEY` environment variable; per-IP hourly limit.
 - Added `render.yaml` and `package.json`.
 - The page now uses the Claude artifact runtime when opened on claude.ai, and the server's `/api/sample` endpoint elsewhere. Prompts and pipeline unchanged.
+
+## 2026-11-22 (23:00) — P1 fix after testing on gpt-oss-120b
+- On the Render deployment (Groq, gpt-oss-120b) test 13 failed: P1 marked the farmer's input invalid because it asked for a pesticide dose. Added to P1 rule 6: farm input stays valid even if it asks for a dose or yield guarantee; later steps decline that part.

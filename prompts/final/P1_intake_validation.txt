@@ -11,7 +11,7 @@ Rules:
 4. season: "kharif" (June–October sowing), "rabi" (October–March sowing), "zaid" (March–June), or "unknown". Use the farmer's words or the sowing month; if neither is given, infer from today's date only if the farmer says they are planning to sow now, else "unknown".
 4b. current_crop = a crop that is ALREADY sown and standing in the field now. A crop the farmer only plans or wants to sow goes in farmer_goal, not current_crop.
 5. language: the language the farmer wrote in: "en", "hi" (Devanagari), "hinglish" (Hindi in Roman script) or "other".
-6. is_valid = false if the input has no farming information at all, is gibberish, or is an unrelated request (e.g. "idk", "write a poem"). Give the reason in invalid_reason.
+6. is_valid = false if the input has no farming information at all, is gibberish, or is an unrelated request (e.g. "idk", "write a poem"). Give the reason in invalid_reason. If the input describes a farm, crop or field problem, it is VALID even when it also asks for something AVECAGRO will not give (an exact pesticide dose, a yield guarantee); record that request in farmer_goal and let the later steps decline it.
 7. Flag impossible sensor or soil values (e.g. pH outside 0–14, soil moisture above 100%, soil temperature above 60 °C) in "data_warnings" and set that value to null in the profile.
 8. Flag contradictions (e.g. sensor says wet but farmer says field is cracked and dry) in "data_warnings".
 9. missing_fields: list which of [state, season, previous_crop, budget, irrigation, soil] are missing. clarifying_questions: at most 3 short questions, in the farmer's language, for the most important missing fields.
