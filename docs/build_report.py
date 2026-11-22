@@ -73,13 +73,13 @@ h = f"""<div class="cover"><div style="font-size:11pt;color:#555">SCSE4041 Mini 
 <tr><td>Batch</td><td>B49 - B64</td></tr>
 <tr><td>Faculty</td><td>Ankit Vijay Bansal</td></tr>
 <tr><td>Team members</td><td>{'<br>'.join(f'{esc(n)} — {e}' for n, e in team)}</td></tr>
-<tr><td>Prototype link</td><td>{esc(links['prototype'])}</td></tr>
+<tr><td>Prototype link</td><td>{esc(links['prototype'])} (public, no login)<br><span class="small">Also on claude.ai: {esc(links['prototype_claude'])}</span></td></tr>
 <tr><td>Repository / folder link</td><td>{esc(links['repository'])}</td></tr>
 <tr><td>Reel link</td><td>{esc(links['reel'])}</td></tr>
-<tr><td>Main AI tool and model</td><td>Claude (Anthropic), called from our web app through the Claude artifact runtime (sample API, model tier "default")</td></tr>
+<tr><td>Main AI tool and model</td><td>Claude (Anthropic) for all measured tests and the prompt lab; the public no-login deployment on Render runs the same prompts on the open-weight model gpt-oss-120b via Groq</td></tr>
 <tr><td>Submission date</td><td>22 November 2026</td></tr>
 </table>
-<p class="small">Prototype access: open the link while signed in to Claude (free account) and click “Allow use of Claude”. The Test runner and Prompt lab tabs re-run every test in this report.</p>
+<p class="small">Prototype access: the Render link opens with no login (a free instance may take up to a minute to wake up). The Test runner and Prompt lab tabs re-run every test in this report.</p>
 """
 
 # ---------- Section 2 ----------
@@ -88,7 +88,7 @@ h += """<h1>2. Prompt and solution design</h1>
 <p><b>Problem and users.</b> Small and marginal farmers in India (86% of holdings, Agriculture Census 2015–16) make crop, irrigation and pest decisions without timely, personalised advice; soil tests are often missing and sensor data, when available, can be wrong. AvecAgro gives them safe, specific guidance in their own language.</p>
 <p><b>Input and output.</b> Input: one free-text message (English, Hindi or Hinglish) with location, season, previous/standing crop, budget, water source, soil report, weather forecast and sensor/drone/rover observations. Output: (1) a validated farm profile with data warnings and missing-information questions, (2) up to 3 crop recommendations with knowledge-base citations, soil status (measured/estimated/unknown) and confidence, (3) a 6–8 window task calendar with irrigation and nutrient notes that react to rain forecasts and soil-moisture readings, (4) a pest alert (none/watch/warning/urgent) with IPM steps, drone-spray suitability and expert contact.</p>
 <p><b>How many prompts and why.</b> Four prompts plus a retrieval step. Milestone 1 used one prompt for everything; its answers were long free text, mixed facts with guesses and could not be checked. Splitting the job lets each prompt have one narrow role and a strict JSON schema: <b>P1 Intake & Validation</b> (structure and sanity-check the input; stop invalid or out-of-region requests before any advice), <b>P2 Crop Recommendation</b>, <b>P3 Farm Plan & Calendar</b>, <b>P4 Pest Alert & Advisor</b>. Code routes between them: a new-crop plan runs P2→P3→P4 (watch-list); a standing crop with a problem runs P4 only; invalid input or a farm outside India stops after P1.</p>
-<p><b>Tool and model.</b> Claude (Anthropic) through the Claude artifact runtime. It handles Hindi/Hinglish well, follows long rule lists and JSON schemas reliably (7/7 strict JSON in our lab), and lets us publish a working web app that evaluators open with a normal login and no API key in the code. Retrieval is our own JavaScript over a curated 27-passage knowledge base, so every crop or pest fact can be traced to a passage id.</p>
+<p><b>Tool and model.</b> Claude (Anthropic) through the Claude artifact runtime. It handles Hindi/Hinglish well, follows long rule lists and JSON schemas reliably (7/7 strict JSON in our lab), and lets us publish a working web app with no API key in the code. For evaluators without a Claude account we also deployed the same app on Render: a small Node server sends the same prompts to the open-weight model gpt-oss-120b on Groq (free tier), which also keeps our Milestone 1 plan to use an open model. Retrieval is our own JavaScript over a curated 27-passage knowledge base, so every crop or pest fact can be traced to a passage id.</p>
 <p><b>What changed since Milestone 1.</b> (1) One baseline prompt → 4-prompt pipeline with routing; (2) added RAG with citation checking; (3) added input validation (invalid/off-topic input, non-India farms, impossible or contradictory sensor values); (4) JSON outputs rendered as farmer-friendly cards in a published web app; (5) Milestone 1 planned an open-source LLM — for the prototype we switched to Claude because it was available with no hosting cost and passed our JSON and language tests; an open-source model remains an option for offline use; (6) 14 test cases and a v1→v3 prompt lab with measured results.</p>
 <h2>2(b) Diagrams</h2>
 """
@@ -148,9 +148,19 @@ h += """<h1>3. Implementation</h1>
 <tr><td>Farm Plan & Calendar (P3)</td><td>6–8 window calendar; rain and sensor-aware irrigation; Soil-Health-Card-based nutrients</td><td>Working</td><td>Postponed irrigation in all rain-forecast tests (1, 8)</td></tr>
 <tr><td>Pest Alert & Advisor (P4)</td><td>Alert level, likely pests, IPM order, no doses, drone suitability, expert contact</td><td>Working</td><td>Identified pink bollworm, fall armyworm, aphid, brown planthopper; refused dose + yield guarantee</td></tr>
 <tr><td>Multilingual output</td><td>Answers in farmer's language (English / Hindi / Hinglish) or chosen language</td><td>Working</td><td>Hinglish verified in test 7; Hindi (Devanagari) selectable</td></tr>
-<tr><td>Web app UI</td><td>Advisor, Test runner, Prompt lab, Prompts & KB tabs</td><td>Working</td><td>Needs Claude sign-in to run the AI</td></tr>
+<tr><td>Web app UI</td><td>Advisor, Test runner, Prompt lab, Prompts & KB tabs</td><td>Working</td><td>No login on Render (gpt-oss-120b via Groq); claude.ai version needs a Claude sign-in</td></tr>
 <tr><td>Live IoT / weather / drone data feeds</td><td>Pull sensor, IMD forecast and drone imagery automatically</td><td>Not started</td><td>Currently typed in by the farmer as text; planned for Milestone 3</td></tr>
 </table>
+<h2>Public deployment and cross-model check</h2>
+<p>The app is deployed at <b>https://avecagro.onrender.com</b> (Render, free plan). <code>server/server.js</code> serves the page and forwards each prompt to Groq; the key is stored only as a Render environment variable. Groq's free tier allows too few tokens per minute to repeat the full 14-test suite before the deadline, so all measured results in this report come from Claude, and we spot-checked the Render deployment (gpt-oss-120b) on 22 Nov 2026:</p>
+<table><tr><th>Test</th><th>Result on gpt-oss-120b</th><th>Pass / Fail</th></tr>
+<tr><td>11 (idk)</td><td>Stopped: invalid input, no farming information</td><td class="pass">Pass</td></tr>
+<tr><td>12 (off-topic)</td><td>Stopped: invalid input, no farming information</td><td class="pass">Pass</td></tr>
+<tr><td>13 (dose + guarantee), first run</td><td>P1 marked the whole input invalid because it asked for a dose, so no pest advice was given</td><td class="fail">Fail</td></tr>
+<tr><td>13, after P1 fix</td><td>Brown planthopper (high), alert warning; declined the chlorpyrifos dose and the 30 q/acre guarantee</td><td class="pass">Pass</td></tr>
+<tr><td>14 (pH 15, 90 °C)</td><td>Both impossible values flagged and set to null; Wheat, Chickpea, Lentil with valid citations; all 4 steps valid JSON</td><td class="pass">Pass</td></tr>
+<tr><td>1 (full 4-step run)</td><td>Did not finish: stopped by the Groq free-tier per-minute token limit</td><td>Not completed</td></tr></table>
+<p><b>P1 fix from this check:</b> rule 6 now says input that describes a farm stays valid even if it also asks for a dose or a guarantee; the later steps decline that part. The Claude results in Section 4 were obtained with the earlier wording.</p>
 <h2>Prompt iteration log (P2 Crop Recommendation)</h2>
 <p class="small">Measured in the Prompt lab on 22 Nov 2026: each version ran on tests 1, 2, 4, 7 and 14, plus 2 repeats of test 1 (7 runs per version). v2 and v3 received the same P1 profile and the same retrieved passages. Raw outputs: <code>test-data/prompt_lab_results.json</code>, <code>test-data/sample_runs.md</code>.</p>
 <table><tr><th style="width:7%">Version</th><th style="width:33%">What changed</th><th style="width:22%">Why it was changed</th><th>Result after the change</th></tr>
