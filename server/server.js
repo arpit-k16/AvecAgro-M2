@@ -1,5 +1,5 @@
 // AvecAgro web server for Render (no dependencies; Node 18+).
-// Serves the single-page app and proxies AI calls to Groq (open-source Llama models), Gemini or Anthropic,
+// Serves the single-page app and proxies AI calls to Groq (open models), Gemini or Anthropic,
 // whichever key is set in the environment (Render dashboard). Keys are never stored in code.
 const http = require('http');
 const fs = require('fs');
@@ -11,10 +11,12 @@ const GEMINI = process.env.GEMINI_API_KEY || '';
 const ANTHROPIC = process.env.ANTHROPIC_API_KEY || '';
 const PROVIDER = GROQ ? 'groq' : GEMINI ? 'gemini' : ANTHROPIC ? 'anthropic' : '';
 const KEY = GROQ || GEMINI || ANTHROPIC;
-const MODEL = process.env.MODEL || { groq: 'openai/gpt-oss-120b', gemini: 'gemini-2.5-flash', anthropic: 'claude-sonnet-5-5' }[PROVIDER] || '';
-const FALLBACK_MODEL = process.env.FALLBACK_MODEL || '';
+let MODEL = process.env.MODEL || { groq: 'openai/gpt-oss-120b', gemini: 'gemini-2.5-flash', anthropic: 'claude-sonnet-5-5' }[PROVIDER] || '';
+// Groq models in order of preference for this app (higher free-tier tokens-per-minute first). The first one the key can use is chosen at startup.
+const GROQ_PREFS = (process.env.GROQ_MODELS || 'meta-llama/llama-4-scout-17b-16e-instruct,meta-llama/llama-4-maverick-17b-128e-instruct,llama-3.3-70b-versatile,openai/gpt-oss-120b,openai/gpt-oss-20b,qwen/qwen3-32b').split(',');
+let groqModels = [];
 const runLog = []; // recent test/lab results posted by the page (kept in memory, newest last)
-const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '8000', 10);
+const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '3000', 10);
 const LIMIT_PER_HOUR = parseInt(process.env.LIMIT_PER_HOUR || '120', 10); // AI calls per visitor IP per hour
 const PAGE = path.join(__dirname, '..', 'code', 'index.html');
 
@@ -48,16 +50,41 @@ function toMessages(input) {
   throw new Error('input must be a string or a list of {role, content}');
 }
 
-async function callGroq(messages, model) {
+// ---- Groq: pacing against free-tier tokens-per-minute (TPM) limits ----
+const rl = { limit: 8000, remaining: null, resetAt: 0 };   // learned from x-ratelimit-* response headers
+function parseReset(v) {             // "7.66s", "1m2.5s", "120ms" -> milliseconds
+  if (!v) return 0; let ms = 0, m;
+  if ((m = /([\d.]+)m(?!s)/.exec(v))) ms += parseFloat(m[1]) * 60000;
+  if ((m = /([\d.]+)s/.exec(v)) && !/ms$/.test(v.trim()) || (m = /m([\d.]+)s/.exec(v))) ms += parseFloat(m[1]) * 1000;
+  if ((m = /^([\d.]+)ms$/.exec(v.trim()))) ms = parseFloat(m[1]);
+  return ms;
+}
+const estTokens = messages => Math.ceil(messages.reduce((n, m) => n + m.content.length, 0) / 3.2) + 20;
+async function callGroq(messages, model, maxTokens) {
   const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST', headers: { authorization: 'Bearer ' + GROQ, 'content-type': 'application/json' },
-    body: JSON.stringify(Object.assign({ model, messages, max_tokens: MAX_TOKENS, temperature: 0.2 }, /gpt-oss/.test(model) ? { reasoning_effort: 'low' } : {}))
+    body: JSON.stringify(Object.assign({ model, messages, max_tokens: maxTokens, temperature: 0.2 }, /gpt-oss/.test(model) ? { reasoning_effort: 'low' } : {}))
   });
+  const lim = parseInt(r.headers.get('x-ratelimit-limit-tokens') || '0', 10); if (lim) rl.limit = lim;
+  const rem = r.headers.get('x-ratelimit-remaining-tokens'); if (rem !== null) rl.remaining = parseInt(rem, 10);
+  const rs = parseReset(r.headers.get('x-ratelimit-reset-tokens')); if (rs) rl.resetAt = Date.now() + rs;
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) { const e = new Error((j.error && j.error.message) || `Groq error ${r.status}`); e.status = r.status; e.retryAfter = parseFloat(r.headers.get('retry-after') || '0'); throw e; }
+  if (!r.ok) {
+    const e = new Error((j.error && j.error.message) || `Groq error ${r.status}`); e.status = r.status;
+    e.retryAfter = parseFloat(r.headers.get('retry-after') || '0'); e.tooLarge = r.status === 413 || /too large/i.test(e.message); throw e;
+  }
   const c = (j.choices || [])[0] || {};
   return { text: (c.message && c.message.content) || '', truncated: c.finish_reason === 'length', modelApplied: j.model || model };
 }
+async function pickGroqModel() {
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/models', { headers: { authorization: 'Bearer ' + GROQ } });
+    const j = await r.json(); groqModels = (j.data || []).filter(m => m.active !== false).map(m => m.id);
+    if (!process.env.MODEL || !groqModels.includes(MODEL)) { const pick = GROQ_PREFS.find(m => groqModels.includes(m)); if (pick) MODEL = pick; }
+    console.log('Groq models available:', groqModels.join(', ')); console.log('Using model:', MODEL);
+  } catch (e) { console.log('Could not list Groq models:', e.message); }
+}
+
 async function callGemini(messages, model) {
   const contents = messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI}`, {
@@ -79,19 +106,38 @@ async function callAnthropic(messages, model) {
   return { text: (j.content || []).filter(b => b.type === 'text').map(b => b.text).join(''), truncated: j.stop_reason === 'max_tokens', modelApplied: j.model || model };
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-async function callAI(messages) {
-  const fn = { groq: callGroq, gemini: callGemini, anthropic: callAnthropic }[PROVIDER];
-  let waited = 0;
-  for (let attempt = 0; ; attempt++) {
-    try { return await fn(messages, MODEL); }
+// One AI call at a time (free tiers are per-minute), each paced so it fits the remaining token budget.
+let queue = Promise.resolve();
+function callAI(messages) {
+  const job = queue.then(() => runAI(messages));
+  queue = job.catch(() => {});
+  return job;
+}
+async function runAI(messages) {
+  if (PROVIDER !== 'groq') {
+    const fn = PROVIDER === 'gemini' ? callGemini : callAnthropic;
+    for (let a = 0; ; a++) { try { return await fn(messages, MODEL); } catch (e) { if (e.status === 429 && a < 2) { await sleep(8000 * (a + 1)); continue; } throw e; } }
+  }
+  const prompt = estTokens(messages);
+  let maxTokens = Math.max(600, Math.min(MAX_TOKENS, rl.limit - prompt - 150));   // request must fit the per-minute limit on its own
+  let budget = 45000;                                                             // stay well inside Render's request timeout
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const need = prompt + maxTokens;
+    if (rl.remaining !== null && rl.remaining < need && rl.resetAt > Date.now()) {  // wait for the window to refill
+      const w = Math.min(rl.resetAt - Date.now() + 250, budget); if (w > 0) { await sleep(w); budget -= w; rl.remaining = null; }
+    }
+    try { return await callGroq(messages, MODEL, maxTokens); }
     catch (e) {
-      // Free tiers limit tokens per minute: wait as long as the provider asks (or a growing pause), up to ~75 s in total.
-      const wait = Math.min(30, Math.max(e.retryAfter || 0, 5 * (attempt + 1))) * 1000;
-      if (e.status === 429 && waited + wait <= 75000) { waited += wait; await sleep(wait); continue; }
-      if (FALLBACK_MODEL && (e.status === 429 || e.status === 404)) return await fn(messages, FALLBACK_MODEL);
+      if (e.tooLarge) { maxTokens = Math.max(400, Math.floor((rl.limit - prompt - 300) * 0.9)); continue; }
+      if (e.status === 429) {
+        const w = Math.min(Math.max((e.retryAfter || 0) * 1000, rl.resetAt - Date.now(), 3000), budget);
+        if (w <= 0 || budget <= 0) { e.message = 'The free AI tier is busy for a few seconds. Please try again.'; throw e; }
+        await sleep(w); budget -= w; continue;
+      }
       throw e;
     }
   }
+  const e = new Error('The free AI tier is busy. Please try again in a minute.'); e.status = 429; throw e;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -102,7 +148,7 @@ const server = http.createServer(async (req, res) => {
       return fs.createReadStream(PAGE).pipe(res);
     }
     if (req.method === 'GET' && url.pathname === '/api/health') {
-      return send(res, 200, { ok: !!KEY, provider: PROVIDER || null, model: KEY ? MODEL : null });
+      return send(res, 200, { ok: !!KEY, provider: PROVIDER || null, model: KEY ? MODEL : null, available: groqModels, tpm: PROVIDER === 'groq' ? rl.limit : null });
     }
     if (req.method === 'POST' && url.pathname === '/api/sample') {
       if (!KEY) return send(res, 503, { error: 'The server has no AI key set (GROQ_API_KEY, GEMINI_API_KEY or ANTHROPIC_API_KEY).' });
@@ -124,4 +170,4 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => console.log(`AvecAgro listening on ${PORT} (provider ${PROVIDER || 'none'}, model ${MODEL || '-'})`));
+server.listen(PORT, async () => { if (PROVIDER === 'groq') await pickGroqModel(); console.log(`AvecAgro listening on ${PORT} (provider ${PROVIDER || 'none'}, model ${MODEL || '-'})`); });

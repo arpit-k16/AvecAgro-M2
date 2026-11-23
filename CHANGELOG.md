@@ -29,3 +29,8 @@
 
 ## 2026-11-22 (23:00) — P1 fix after testing on gpt-oss-120b
 - On the Render deployment (Groq, gpt-oss-120b) test 13 failed: P1 marked the farmer's input invalid because it asked for a pesticide dose. Added to P1 rule 6: farm input stays valid even if it asks for a dose or yield guarantee; later steps decline that part.
+
+## 2026-11-23 — Render deployment: fix free-tier errors
+- Fixed "Request too large ... tokens per minute (TPM): Limit 8000, Requested 9186": Groq counts max_tokens toward the per-minute limit; the server now sizes max_tokens so each request fits the limit.
+- Fixed Prompt lab "Server error 502": AI calls are now queued one at a time and paced with Groq's x-ratelimit headers; waits are capped so Render never drops the request; the page retries automatically on 429/502/503.
+- The server now lists the models the key can use at startup and picks the best one for the free tier (shown in the status pill and /api/health).

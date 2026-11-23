@@ -214,7 +214,7 @@ document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
 async function serverSample(input, opts) {
   const r = await fetch('/api/sample', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({input})});
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) { const e = new Error(j.error || ('Server error ' + r.status)); e.code = r.status === 429 ? 'rate_limited' : 'server_error'; throw e; }
+  if (!r.ok) { const e = new Error(j.error || ('Server error ' + r.status)); e.code = [429, 502, 503, 504].includes(r.status) ? 'rate_limited' : 'server_error'; throw e; }
   return j;
 }
 (async () => {
