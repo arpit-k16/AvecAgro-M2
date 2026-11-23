@@ -119,7 +119,7 @@ async function getWeather(place, state) {
   const u = `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&timezone=Asia%2FKolkata&forecast_days=4` +
             '&daily=precipitation_sum,precipitation_probability_max,temperature_2m_max,temperature_2m_min&current=temperature_2m,relative_humidity_2m,precipitation';
   const f = await (await fetch(u)).json();
-  if (!f.daily) { const e = new Error('Forecast unavailable'); e.status = 502; throw e; }
+  if (!f.daily) { const e = new Error('Forecast unavailable' + (f.reason ? ': ' + f.reason : '')); e.status = 502; throw e; }
   const d = f.daily, days = d.time.slice(0, 4).map((date, i) => ({ date, rain_mm: d.precipitation_sum[i], rain_prob: d.precipitation_probability_max[i], tmax: d.temperature_2m_max[i], tmin: d.temperature_2m_min[i] }));
   const next3 = days.slice(1, 4);  // tomorrow onwards
   const wet = next3.filter(x => (x.rain_mm || 0) >= 2.5 || (x.rain_prob || 0) >= 60);

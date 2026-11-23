@@ -338,6 +338,26 @@ function langFor(p1, override) {
 const SERVER = () => sample === serverSample;   // live data needs our own server (Render), not the claude.ai sandbox
 async function getJSON(url) { const r = await fetch(url, {cache: 'no-store'}); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }
 const SENSOR_NAMES = {soil_moisture_pct: ['soil moisture', '%'], soil_ph: ['soil pH', ''], soil_temp_c: ['soil temperature', ' °C'], air_temp_c: ['air temperature', ' °C'], humidity_pct: ['air humidity', '%'], ec_ds_m: ['soil EC', ' dS/m'], n_kg_ha: ['soil N', ' kg/ha'], p_kg_ha: ['soil P', ' kg/ha'], k_kg_ha: ['soil K', ' kg/ha']};
+// Weather: fetched in the visitor's browser straight from Open-Meteo (free, no key, CORS allowed); our server is the backup.
+async function weatherDirect(place, state) {
+  const g = await getJSON('https://geocoding-api.open-meteo.com/v1/search?count=10&language=en&format=json&countryCode=IN&name=' + encodeURIComponent(place));
+  const res = g.results || []; if (!res.length) throw new Error('Place not found: ' + place);
+  const st = (state || '').toLowerCase();
+  const loc = res.find(r => st && (r.admin1 || '').toLowerCase().includes(st)) || res[0];
+  const f = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&timezone=Asia%2FKolkata&forecast_days=4&daily=precipitation_sum,precipitation_probability_max,temperature_2m_max,temperature_2m_min&current=temperature_2m,relative_humidity_2m,precipitation`);
+  if (!f.daily) throw new Error('Forecast unavailable' + (f.reason ? ': ' + f.reason : ''));
+  const d = f.daily, days = d.time.slice(0, 4).map((date, i) => ({date, rain_mm: d.precipitation_sum[i], rain_prob: d.precipitation_probability_max[i], tmax: d.temperature_2m_max[i], tmin: d.temperature_2m_min[i]}));
+  const next3 = days.slice(1, 4), wet = next3.filter(x => (x.rain_mm || 0) >= 2.5 || (x.rain_prob || 0) >= 60);
+  const fmt = x => new Date(x.date + 'T00:00:00').toLocaleDateString('en-IN', {weekday: 'short', day: 'numeric', month: 'short'});
+  const summary = (wet.length ? `Rain expected in the next 3 days: ${wet.map(x => `${fmt(x)} ${x.rain_mm ?? 0} mm (${x.rain_prob ?? '?'}%)`).join(', ')}.`
+    : `No significant rain expected in the next 3 days (total ${next3.reduce((a, x) => a + (x.rain_mm || 0), 0).toFixed(1)} mm).`) +
+    ` Temperatures ${Math.min(...next3.map(x => x.tmin))}–${Math.max(...next3.map(x => x.tmax))} °C.` + (f.current ? ` Now: ${f.current.temperature_2m} °C, humidity ${f.current.relative_humidity_2m}%.` : '');
+  return {place: `${loc.name}, ${loc.admin1 || ''}`.replace(/, $/, ''), lat: loc.latitude, lon: loc.longitude, days, current: f.current || null, summary, source: 'Open-Meteo', fetched_at: new Date().toISOString()};
+}
+async function getWeather(place, state) {
+  try { return await weatherDirect(place, state); }
+  catch (e) { return await getJSON('/api/weather?place=' + encodeURIComponent(place) + '&state=' + encodeURIComponent(state || '')); }
+}
 async function runPipeline(text, langOverride, onStep, opts) {
   opts = opts || {};
   const T = {input: text, started: new Date().toISOString(), steps: {}, route: null, stopped: null};
@@ -363,7 +383,7 @@ async function runPipeline(text, langOverride, onStep, opts) {
   if (prof.in_india === false) { T.stopped = 'outside_india'; ['RAG','P2','P3','P4'].forEach(k => step(k, 'skip')); return T; }
   if (wantLive && opts.weather && (prof.district || prof.state)) {
     try {
-      const wx = await getJSON('/api/weather?place=' + encodeURIComponent(prof.district || prof.state) + '&state=' + encodeURIComponent(prof.state || ''));
+      const wx = await getWeather(prof.district || prof.state, prof.state || '');
       T.steps.WX = wx;
       prof.weather = (prof.weather ? 'Farmer said: ' + prof.weather + '. ' : '') + `Live forecast (Open-Meteo, ${wx.place}): ${wx.summary}`;
     } catch (e) { T.steps.WX = {error: e.message}; }
