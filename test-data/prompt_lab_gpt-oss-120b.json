@@ -1,0 +1,9 @@
+{
+ "run_at": "2026-11-23, Prompt lab on https://avecagro.onrender.com (Groq, openai/gpt-oss-120b)",
+ "inputs": "tests 1, 2, 4, 7, 14 (+2 repeats of test 1) = 7 runs per version",
+ "v1": {"strict_json": "0/7", "exactly_3_crops": "0/7", "valid_citations": "0/7", "no_invented_soil_numbers": "2/6", "top_crop_test1_x3": "free text (first crop named: soybean x3)", "hinglish_test7": true, "avg_chars": 9966, "avg_s": 11.6},
+ "v2": {"strict_json": "7/7", "exactly_3_crops": "7/7", "valid_citations": "7/7", "no_invented_soil_numbers": "5/6", "top_crop_test1_x3": "chickpea x3", "hinglish_test7": true, "avg_chars": 2790, "avg_s": 27.4},
+ "v3": {"strict_json": "7/7", "exactly_3_crops": "5/7", "valid_citations": "7/7", "no_invented_soil_numbers": "6/6", "top_crop_test1_x3": "chickpea x3", "hinglish_test7": true, "avg_chars": 1961, "avg_s": 35.6},
+ "notes": ["Times include waiting for the Groq free tier's 8,000 tokens-per-minute limit (calls are queued and paced by the server), so they are not model speed.",
+           "Same direction as the Claude run (test-data/prompt_lab_results.json): v1 is free text and invents soil numbers; v3 is valid JSON with valid citations and no invented soil numbers."]
+}
