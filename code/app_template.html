@@ -64,7 +64,7 @@ select{font:500 15px var(--body);padding:8px 10px;border-radius:10px;border:2px 
 .how span{color:var(--ink2);font-size:14.5px}
 
 /* the furrow (signature) */
-.furrow{list-style:none;margin:6px 0 24px;padding:18px 8px 0;display:grid;grid-template-columns:repeat(5,1fr);position:relative}
+.furrow{list-style:none;margin:6px 0 24px;padding:18px 8px 0;display:grid;grid-template-columns:repeat(6,1fr);position:relative}
 .furrow::before{content:"";position:absolute;left:10%;right:10%;top:29px;height:4px;border-radius:4px;background:repeating-linear-gradient(90deg,var(--soil) 0 10px,transparent 10px 16px);opacity:.35}
 .furrow .step{text-align:center;position:relative;font-size:14px;color:var(--ink2)}
 .furrow .seed{display:block;width:26px;height:26px;margin:0 auto 6px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:var(--soil-t);border:2px solid var(--soil);position:relative;z-index:1;transition:background .3s,border-color .3s,transform .3s}
@@ -106,13 +106,27 @@ pre{white-space:pre-wrap;word-break:break-word;background:#E6ECE4;padding:12px;b
 .muted{color:var(--ink2);font-size:15px}
 .kb{font-size:13.5px;color:var(--monsoon)}
 .ok-t{color:var(--leaf);font-weight:600}.bad-t{color:var(--rust);font-weight:600}
+
+.live{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:14px;padding:12px 14px;background:var(--paper);border:1px dashed var(--line);border-radius:14px}
+.live label{font-size:15px;color:var(--ink2);display:flex;align-items:center;gap:8px}
+.live input[type=text]{font:500 15px var(--body);padding:7px 10px;border-radius:10px;border:2px solid var(--line);background:#fff;width:150px}
+.live input[type=checkbox]{width:18px;height:18px;accent-color:var(--leaf)}
+.livecard{background:var(--monsoon-t);border-radius:14px;padding:12px 16px;margin:0 0 14px}
+.livecard h4{margin:0 0 6px;font:700 16px var(--display);color:var(--monsoon)}
+.wxdays{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.wxday{background:#fff;border-radius:10px;padding:8px 10px;font-size:14px}
+.wxday b{display:block;font-family:var(--display)}
+.wxday.wet{outline:2px solid var(--monsoon)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:12px 0}
+.form-grid label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--ink2)}
+.form-grid input{font:500 16px var(--body);padding:9px 10px;border-radius:10px;border:2px solid var(--line);background:#fff}
 code{font-size:.92em;background:#E6ECE4;padding:1px 5px;border-radius:5px}
 .tablewrap{overflow-x:auto}
 
 @media (max-width:820px){
   .hero{grid-template-columns:1fr}
   .how{display:none}
-  .furrow{grid-template-columns:repeat(5,minmax(60px,1fr));font-size:12px}
+  .furrow{grid-template-columns:repeat(6,minmax(52px,1fr));font-size:12px}
   .furrow .step{font-size:12px}
   .card{padding:16px}
   table{font-size:13.5px}
@@ -128,6 +142,7 @@ code{font-size:.92em;background:#E6ECE4;padding:1px 5px;border-radius:5px}
   <button data-v="advisor" class="on">Advisor</button>
   <button data-v="tests">Test runner</button>
   <button data-v="lab">Prompt lab</button>
+  <button data-v="sensors">Sensors</button>
   <button data-v="prompts">Prompts and knowledge</button>
   <button data-v="about">How it works</button>
 </nav>
@@ -144,11 +159,17 @@ code{font-size:.92em;background:#E6ECE4;padding:1px 5px;border-radius:5px}
         <label class="lang">Answer in <select id="lang"><option value="auto">the farmer's language</option><option value="en">English</option><option value="hi">Hindi</option></select></label>
         <span class="muted" id="gomsg" aria-live="polite"></span>
       </div>
+      <div class="live" id="liveopts">
+        <label><input type="checkbox" id="livewx" checked> Use the live weather forecast for this farm</label>
+        <label for="dev">Soil sensor ID <input type="text" id="dev" placeholder="e.g. field-1" autocomplete="off"></label>
+        <span class="muted" id="livenote"></span>
+      </div>
       <div class="chips" id="examples"><span class="muted">Or try a real case:</span></div>
     </div>
     <aside class="how">
       <h2>What happens when you ask</h2>
       <ol>
+        <li><b>We pull live data</b><span>Today's forecast for your district, and your soil sensor if you have one.</span></li>
         <li><b>We check what you wrote</b><span>Missing details, impossible sensor values and off-topic requests are caught first.</span></li>
         <li><b>We look up trusted facts</b><span>Passages for your state, season and crop are pulled from our farming notes.</span></li>
         <li><b>We suggest crops</b><span>Up to three, each with its source and an honest confidence.</span></li>
@@ -178,6 +199,30 @@ code{font-size:.92em;background:#E6ECE4;padding:1px 5px;border-radius:5px}
   </div>
   <div class="card"><h3>Summary</h3><div id="lsum" class="muted">Not run yet.</div></div>
   <div class="card tablewrap"><h3>Runs</h3><table id="ltable"><thead><tr><th>Version</th><th>Test</th><th>Rep</th><th>Strict JSON</th><th>Parseable</th><th># crops</th><th>Valid KB citations</th><th>Invented soil numbers</th><th>Language OK</th><th>Top crop</th><th>Time (s)</th><th></th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section id="sensors" class="view">
+  <div class="card">
+    <h3>Soil sensor feed</h3>
+    <p class="muted">Any device can send readings here: an ESP32 or Arduino board with a soil probe, a phone app, or the script in <code>tools/sensor_device.py</code>. Give the same sensor ID in the Advisor and its latest reading is added to the farm details automatically. You can also type a reading below.</p>
+    <div class="form-grid">
+      <label>Sensor ID<input id="s_dev" value="field-1"></label>
+      <label>Soil moisture (%)<input id="s_m" inputmode="decimal" placeholder="e.g. 18"></label>
+      <label>Soil pH<input id="s_ph" inputmode="decimal" placeholder="e.g. 7.2"></label>
+      <label>Soil temperature (°C)<input id="s_st" inputmode="decimal" placeholder="e.g. 24"></label>
+      <label>Air temperature (°C)<input id="s_at" inputmode="decimal" placeholder="e.g. 29"></label>
+      <label>Air humidity (%)<input id="s_h" inputmode="decimal" placeholder="e.g. 61"></label>
+    </div>
+    <div class="row"><button class="btn primary" id="s_send">Send reading</button><button class="btn" id="s_load">Show latest readings</button><span class="muted" id="s_msg" aria-live="polite"></span></div>
+    <div id="s_out"></div>
+    <details><summary>How a real device sends readings</summary><pre>POST /api/sensor
+Content-Type: application/json
+x-sensor-token: (only if SENSOR_TOKEN is set on the server)
+
+{"device": "field-1", "soil_moisture_pct": 18, "soil_ph": 7.2, "soil_temp_c": 24,
+ "air_temp_c": 29, "humidity_pct": 61}</pre>
+    <p class="muted">Readings are kept in the server's memory (the last 50 per sensor). On the free server they are cleared when it restarts after being idle.</p></details>
+  </div>
 </section>
 
 <section id="prompts" class="view"><div id="plist"></div></section>
@@ -224,6 +269,7 @@ async function serverSample(input, opts) {
     try { const h = await (await fetch('/api/health')).json(); if (h.ok) { sample = serverSample; where = 'AI connected: ' + h.model; } } catch (e) {}
   }
   $('#status').textContent = sample ? where : 'AI is not connected yet';
+  if (!SERVER()) { $('#livewx').checked = false; $('#livewx').disabled = true; $('#dev').disabled = true; $('#livenote').textContent = 'Live weather and sensors work on avecagro.onrender.com.'; }
   $('#status').classList.toggle('ok', !!sample);
   try { if (window.claude && claude.use) db = await claude.use('db'); } catch (e) {}
 })();
@@ -289,9 +335,24 @@ function langFor(p1, override) {
   const l = override && override !== 'auto' ? override : (p1.language || 'en');
   return l === 'hi' ? 'hi (simple Hindi in Devanagari script)' : l === 'hinglish' ? 'hinglish (simple Hindi written in Roman script)' : 'en (simple English)';
 }
-async function runPipeline(text, langOverride, onStep) {
+const SERVER = () => sample === serverSample;   // live data needs our own server (Render), not the claude.ai sandbox
+async function getJSON(url) { const r = await fetch(url, {cache: 'no-store'}); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }
+const SENSOR_NAMES = {soil_moisture_pct: ['soil moisture', '%'], soil_ph: ['soil pH', ''], soil_temp_c: ['soil temperature', ' °C'], air_temp_c: ['air temperature', ' °C'], humidity_pct: ['air humidity', '%'], ec_ds_m: ['soil EC', ' dS/m'], n_kg_ha: ['soil N', ' kg/ha'], p_kg_ha: ['soil P', ' kg/ha'], k_kg_ha: ['soil K', ' kg/ha']};
+async function runPipeline(text, langOverride, onStep, opts) {
+  opts = opts || {};
   const T = {input: text, started: new Date().toISOString(), steps: {}, route: null, stopped: null};
   const step = (k, s) => onStep && onStep(k, s);
+  const wantLive = SERVER() && (opts.weather || opts.device);
+  step('LIVE', wantLive ? 'run' : 'skip');
+  if (wantLive && opts.device) {
+    try {
+      const sd = await getJSON('/api/sensor?device=' + encodeURIComponent(opts.device));
+      const r = sd.latest; T.steps.SENSOR = r;
+      const when = new Date(r.at).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
+      text += `\n\nLive soil sensor reading (IoT device "${r.device}", ${when} IST): ` + Object.entries(r.readings).map(([k, v]) => (SENSOR_NAMES[k] || [k, ''])[0] + ' ' + v + (SENSOR_NAMES[k] || ['', ''])[1]).join(', ') + '.';
+      T.input = text;
+    } catch (e) { T.steps.SENSOR = {error: e.message}; }
+  }
   step('P1', 'run');
   const p1 = await callJSON('P1', {today: new Date().toISOString().slice(0, 10), farmer_input: text});
   T.steps.P1 = p1; T.model = p1.model;
@@ -300,6 +361,14 @@ async function runPipeline(text, langOverride, onStep) {
   const prof = p1.out;
   if (prof.is_valid === false) { T.stopped = 'invalid_input'; ['RAG','P2','P3','P4'].forEach(k => step(k, 'skip')); return T; }
   if (prof.in_india === false) { T.stopped = 'outside_india'; ['RAG','P2','P3','P4'].forEach(k => step(k, 'skip')); return T; }
+  if (wantLive && opts.weather && (prof.district || prof.state)) {
+    try {
+      const wx = await getJSON('/api/weather?place=' + encodeURIComponent(prof.district || prof.state) + '&state=' + encodeURIComponent(prof.state || ''));
+      T.steps.WX = wx;
+      prof.weather = (prof.weather ? 'Farmer said: ' + prof.weather + '. ' : '') + `Live forecast (Open-Meteo, ${wx.place}): ${wx.summary}`;
+    } catch (e) { T.steps.WX = {error: e.message}; }
+  }
+  if (wantLive) step('LIVE', (T.steps.WX && !T.steps.WX.error) || (T.steps.SENSOR && !T.steps.SENSOR.error) ? 'ok' : 'err');
   const lang = langFor(prof, langOverride);
   const pj = JSON.stringify(prof);
   const problems = (prof.observed_problems || []).filter(Boolean);
@@ -330,7 +399,7 @@ async function runPipeline(text, langOverride, onStep) {
     const sens = (prof.sensor_readings || []).filter(s => s && s.value !== null && s.name).map(s => `${s.name}: ${s.value}${s.unit || ''}`).join(', ');
     const ch4 = retrieve({state: prof.state, season: prof.season, crops: [crop], text: obs + ' pest disease ' + text}, 5, ['KB-23']);
     T.steps.R4 = ch4.map(c => c.id);
-    const p4 = await callJSON('P4', {crop, observations: obs + (sens ? '\nSensor readings: ' + sens : ''), profile_json: pj, retrieved_chunks: fmtChunks(ch4), output_language: lang});
+    const p4 = await callJSON('P4', {crop, observations: obs + (sens ? '\nSensor readings: ' + sens : '') + (prof.weather ? '\nWeather: ' + prof.weather : ''), profile_json: pj, retrieved_chunks: fmtChunks(ch4), output_language: lang});
     T.steps.P4 = p4; step('P4', p4.json_ok ? 'ok' : 'err');
   } else step('P4', 'skip');
   T.finished = new Date().toISOString();
@@ -338,7 +407,16 @@ async function runPipeline(text, langOverride, onStep) {
 }
 
 // ---------- rendering ----------
-function stepBar(id) { return `<ol class="furrow" id="${id}" aria-label="Progress">` + ['P1','RAG','P2','P3','P4'].map(k => `<li class="step" data-k="${k}"><span class="seed" aria-hidden="true"></span>${{P1:'Check input',RAG:'Find facts',P2:'Choose crops',P3:'Plan season',P4:'Pest watch'}[k]}</li>`).join('') + '</ol>'; }
+function stepBar(id) { return `<ol class="furrow" id="${id}" aria-label="Progress">` + ['LIVE','P1','RAG','P2','P3','P4'].map(k => `<li class="step" data-k="${k}"><span class="seed" aria-hidden="true"></span>${{LIVE:'Live data',P1:'Check input',RAG:'Find facts',P2:'Choose crops',P3:'Plan season',P4:'Pest watch'}[k]}</li>`).join('') + '</ol>'; }
+function liveCard(T) {
+  let h = '';
+  const sd = T.steps.SENSOR, wx = T.steps.WX;
+  if (sd) h += sd.error ? `<div class="warn">Soil sensor: ${esc(sd.error)}</div>`
+    : `<div class="livecard"><h4>Live soil sensor · ${esc(sd.device)}</h4><div>${Object.entries(sd.readings).map(([k, v]) => `<b>${esc((SENSOR_NAMES[k] || [k])[0])}:</b> ${esc(v)}${esc((SENSOR_NAMES[k] || ['', ''])[1])}`).join(' · ')}</div><div class="muted">Received ${esc(new Date(sd.at).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}))} IST${(sd.warnings || []).length ? ' · device check: ' + esc(sd.warnings.join('; ')) : ''}</div></div>`;
+  if (wx) h += wx.error ? `<div class="warn">Live weather: ${esc(wx.error)}</div>`
+    : `<div class="livecard"><h4>Live forecast · ${esc(wx.place)}</h4><div>${esc(wx.summary)}</div><div class="wxdays">${wx.days.map((d, i) => `<div class="wxday${(d.rain_mm || 0) >= 2.5 || (d.rain_prob || 0) >= 60 ? ' wet' : ''}"><b>${i === 0 ? 'Today' : esc(new Date(d.date + 'T00:00:00').toLocaleDateString('en-IN', {weekday: 'short', day: 'numeric'}))}</b>${esc(d.rain_mm ?? 0)} mm · ${esc(d.rain_prob ?? '–')}%<br>${esc(d.tmin)}–${esc(d.tmax)} °C</div>`).join('')}</div><div class="muted">Source: Open-Meteo, fetched ${esc(new Date(wx.fetched_at).toLocaleTimeString('en-IN', {timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit'}))} IST. Used by the season plan and pest watch.</div></div>`;
+  return h;
+}
 function setStep(barId, k, s) { const el = document.querySelector(`#${barId} [data-k="${k}"]`); if (el) el.className = 'step ' + s; }
 function raw(label, st) { if (!st) return ''; return `<details><summary>${label}: raw output (${(st.ms/1000).toFixed(1)} s${st.json_strict ? ', valid JSON' : st.json_ok ? ', JSON after cleanup' : ', NOT JSON'})</summary><pre>${esc(st.text)}</pre></details>`; }
 function renderTrace(T) {
@@ -354,6 +432,7 @@ function renderTrace(T) {
     ${(p1.data_warnings || []).map(w => `<div class="warn">⚠ ${esc(w)}</div>`).join('')}
     ${p1.missing_fields && p1.missing_fields.length ? `<p class="muted">Missing: ${esc(p1.missing_fields.join(', '))}</p>` : ''}
     ${p1.clarifying_questions && p1.clarifying_questions.length ? `<p class="muted">To improve advice:</p>${list(p1.clarifying_questions)}` : ''}
+    ${liveCard(T)}
     <p class="muted">Route: <b>${esc(T.route)}</b>${T.model ? ' · model: ' + esc(T.model) : ''}</p>${raw('P1', T.steps.P1)}</div>`;
   const p2 = T.steps.P2 && T.steps.P2.out;
   if (T.steps.P2) {
@@ -403,7 +482,7 @@ $('#go').onclick = async () => {
   $('#go').disabled = true; $('#gomsg').textContent = 'Working… (about 30–60 s)';
   $('#out').innerHTML = stepBar('bar0');
   try {
-    const T = await runPipeline(text, $('#lang').value, (k, s) => setStep('bar0', k, s));
+    const T = await runPipeline(text, $('#lang').value, (k, s) => setStep('bar0', k, s), {weather: $('#livewx').checked, device: $('#dev').value.trim()});
     window.LAST = T;
     $('#out').innerHTML = $('#out').innerHTML + renderTrace(T);
     $('#gomsg').textContent = 'Done.';
@@ -511,6 +590,29 @@ $('#runlab').onclick = async () => {
   } catch (e) { $('#lmsg').textContent = 'ERROR: ' + (e.message || e.code || e); }
   $('#runlab').disabled = false;
 };
+
+// ---------- sensors tab ----------
+function sensorTable(list) {
+  return '<div class="tablewrap"><table><tr><th>Received (IST)</th>' + Object.keys(SENSOR_NAMES).filter(k => list.some(r => k in r.readings)).map(k => `<th>${esc(SENSOR_NAMES[k][0])}</th>`).join('') + '<th>Device check</th></tr>' +
+    list.slice().reverse().map(r => '<tr><td>' + esc(new Date(r.at).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'})) + '</td>' + Object.keys(SENSOR_NAMES).filter(k => list.some(x => k in x.readings)).map(k => `<td>${k in r.readings ? esc(r.readings[k]) + esc(SENSOR_NAMES[k][1]) : '–'}</td>`).join('') + `<td>${esc((r.warnings || []).join('; ') || 'ok')}</td></tr>`).join('') + '</table></div>';
+}
+async function loadSensor() {
+  const dev = $('#s_dev').value.trim();
+  try { const d = await getJSON('/api/sensor?device=' + encodeURIComponent(dev)); $('#s_out').innerHTML = sensorTable(d.history); $('#s_msg').textContent = ''; }
+  catch (e) { $('#s_out').innerHTML = ''; $('#s_msg').textContent = e.message; }
+}
+$('#s_send').onclick = async () => {
+  if (!SERVER()) { $('#s_msg').textContent = 'The sensor feed runs on avecagro.onrender.com.'; return; }
+  const body = {device: $('#s_dev').value.trim()};
+  [['s_m', 'soil_moisture_pct'], ['s_ph', 'soil_ph'], ['s_st', 'soil_temp_c'], ['s_at', 'air_temp_c'], ['s_h', 'humidity_pct']].forEach(([id, k]) => { const v = $('#' + id).value.trim(); if (v !== '') body[k] = Number(v); });
+  try {
+    const r = await fetch('/api/sensor', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(body)});
+    const j = await r.json(); if (!r.ok) throw new Error(j.error);
+    $('#s_msg').textContent = 'Reading saved' + ((j.stored.warnings || []).length ? ' (device check: ' + j.stored.warnings.join('; ') + ')' : '') + '. Use sensor ID "' + j.stored.device + '" in the Advisor.';
+    $('#dev').value = j.stored.device; loadSensor();
+  } catch (e) { $('#s_msg').textContent = 'Not saved: ' + e.message; }
+};
+$('#s_load').onclick = () => { if (!SERVER()) { $('#s_msg').textContent = 'The sensor feed runs on avecagro.onrender.com.'; return; } loadSensor(); };
 
 // ---------- prompts tab ----------
 $('#plist').innerHTML = ['P1','P2','P3','P4'].map(id => { const p = D.prompts[id]; return `<div class="card"><h3>${esc(p.meta.split('\n')[0])}</h3><p class="muted">${esc(p.meta.split('\n').slice(1).join(' '))}</p><details><summary>System prompt</summary><pre>${esc(p.system)}</pre></details><details><summary>User prompt template</summary><pre>${esc(p.user)}</pre></details></div>`; }).join('')

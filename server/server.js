@@ -106,6 +106,41 @@ async function callAnthropic(messages, model) {
   return { text: (j.content || []).filter(b => b.type === 'text').map(b => b.text).join(''), truncated: j.stop_reason === 'max_tokens', modelApplied: j.model || model };
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// ---- Live data: weather forecast (Open-Meteo, free, no key) ----
+const wxCache = new Map(); // key -> {at, data}
+async function getWeather(place, state) {
+  const key = (place + '|' + state).toLowerCase();
+  const hit = wxCache.get(key); if (hit && Date.now() - hit.at < 30 * 60e3) return hit.data;
+  const g = await (await fetch('https://geocoding-api.open-meteo.com/v1/search?count=10&language=en&format=json&countryCode=IN&name=' + encodeURIComponent(place))).json();
+  const res = (g.results || []);
+  if (!res.length) { const e = new Error('Place not found: ' + place); e.status = 404; throw e; }
+  const st = (state || '').toLowerCase();
+  const loc = res.find(r => st && (r.admin1 || '').toLowerCase().includes(st)) || res[0];
+  const u = `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&timezone=Asia%2FKolkata&forecast_days=4` +
+            '&daily=precipitation_sum,precipitation_probability_max,temperature_2m_max,temperature_2m_min&current=temperature_2m,relative_humidity_2m,precipitation';
+  const f = await (await fetch(u)).json();
+  if (!f.daily) { const e = new Error('Forecast unavailable'); e.status = 502; throw e; }
+  const d = f.daily, days = d.time.slice(0, 4).map((date, i) => ({ date, rain_mm: d.precipitation_sum[i], rain_prob: d.precipitation_probability_max[i], tmax: d.temperature_2m_max[i], tmin: d.temperature_2m_min[i] }));
+  const next3 = days.slice(1, 4);  // tomorrow onwards
+  const wet = next3.filter(x => (x.rain_mm || 0) >= 2.5 || (x.rain_prob || 0) >= 60);
+  const fmt = x => new Date(x.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  const summary = (wet.length
+    ? `Rain expected in the next 3 days: ${wet.map(x => `${fmt(x)} ${x.rain_mm ?? 0} mm (${x.rain_prob ?? '?'}%)`).join(', ')}.`
+    : `No significant rain expected in the next 3 days (total ${next3.reduce((a, x) => a + (x.rain_mm || 0), 0).toFixed(1)} mm).`) +
+    ` Temperatures ${Math.min(...next3.map(x => x.tmin))}–${Math.max(...next3.map(x => x.tmax))} °C.` +
+    (f.current ? ` Now: ${f.current.temperature_2m} °C, humidity ${f.current.relative_humidity_2m}%.` : '');
+  const data = { place: `${loc.name}, ${loc.admin1 || ''}`.replace(/, $/, ''), lat: loc.latitude, lon: loc.longitude, days, current: f.current || null, summary, source: 'Open-Meteo', fetched_at: new Date().toISOString() };
+  wxCache.set(key, { at: Date.now(), data }); return data;
+}
+
+// ---- Live data: IoT soil sensor feed ----
+// A device (ESP32, phone, script) POSTs JSON to /api/sensor; the advisor reads the latest reading by device id.
+// Set SENSOR_TOKEN in Render to require the header "x-sensor-token" (recommended for real devices).
+const SENSOR_TOKEN = process.env.SENSOR_TOKEN || '';
+const sensors = new Map(); // device -> [readings], newest last
+const SENSOR_FIELDS = { soil_moisture_pct: [0, 100], soil_ph: [0, 14], soil_temp_c: [-10, 60], air_temp_c: [-20, 55], humidity_pct: [0, 100], ec_ds_m: [0, 20], n_kg_ha: [0, 1000], p_kg_ha: [0, 500], k_kg_ha: [0, 1500] };
+function cleanDevice(id) { return String(id || '').trim().slice(0, 40).replace(/[^A-Za-z0-9_.-]/g, ''); }
+
 // One AI call at a time (free tiers are per-minute), each paced so it fits the remaining token budget.
 let queue = Promise.resolve();
 function callAI(messages) {
@@ -157,6 +192,36 @@ const server = http.createServer(async (req, res) => {
       const body = JSON.parse(await readBody(req) || '{}');
       const out = await callAI(toMessages(body.input));
       return send(res, 200, out);
+    }
+    if (req.method === 'GET' && url.pathname === '/api/weather') {
+      const place = (url.searchParams.get('place') || '').trim(), state = (url.searchParams.get('state') || '').trim();
+      if (!place && !state) return send(res, 400, { error: 'Give a place (district or town).' });
+      try { return send(res, 200, await getWeather(place || state, state)); }
+      catch (e) { return send(res, e.status || 502, { error: e.message }); }
+    }
+    if (req.method === 'POST' && url.pathname === '/api/sensor') {
+      if (SENSOR_TOKEN && req.headers['x-sensor-token'] !== SENSOR_TOKEN) return send(res, 401, { error: 'Wrong or missing x-sensor-token.' });
+      const body = JSON.parse(await readBody(req, 10000) || '{}');
+      const device = cleanDevice(body.device);
+      if (!device) return send(res, 400, { error: 'device is required (letters, digits, - _ .)' });
+      const readings = {}, warnings = [];
+      for (const [k, [lo, hi]] of Object.entries(SENSOR_FIELDS)) {
+        if (body[k] === undefined || body[k] === null || body[k] === '') continue;
+        const v = Number(body[k]); if (!Number.isFinite(v)) { warnings.push(`${k} is not a number`); continue; }
+        if (v < lo || v > hi) warnings.push(`${k}=${v} is outside the possible range ${lo}–${hi}`);
+        readings[k] = v;   // stored as sent; the advisor's intake step flags impossible values
+      }
+      if (!Object.keys(readings).length) return send(res, 400, { error: 'No known readings. Fields: ' + Object.keys(SENSOR_FIELDS).join(', ') });
+      const rec = { device, at: new Date().toISOString(), readings, warnings };
+      const list = sensors.get(device) || []; list.push(rec); if (list.length > 50) list.shift(); sensors.set(device, list);
+      if (sensors.size > 500) sensors.delete(sensors.keys().next().value);
+      return send(res, 200, { ok: true, stored: rec });
+    }
+    if (req.method === 'GET' && url.pathname === '/api/sensor') {
+      const device = cleanDevice(url.searchParams.get('device'));
+      const list = sensors.get(device) || [];
+      if (!list.length) return send(res, 404, { error: `No readings yet from device "${device}".` });
+      return send(res, 200, { device, latest: list[list.length - 1], history: list.slice(-10) });
     }
     if (req.method === 'POST' && url.pathname === '/api/log') {
       const body = JSON.parse(await readBody(req, 400000) || '{}');
