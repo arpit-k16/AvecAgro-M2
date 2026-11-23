@@ -11,7 +11,8 @@ AvecAgro is an AI farming assistant for small and marginal farmers in India. A f
 
 ## Prototype
 
-**Live app:** https://claude.ai/artifact/SS1SXmKDuY4BjQYXdUaxXp  
+**Live app (no login):** https://avecagro.onrender.com  
+**Claude version:** https://claude.ai/artifact/SS1SXmKDuY4BjQYXdUaxXp  
 **Repository:** https://github.com/arpit-k16/AvecAgro-M2  
 **Reel:** `docs/reel/AvecAgro_M2_Reel.mp4` (127 s)
 Open it while signed in to Claude (a free account works) and click **Allow use of Claude** when asked. Tabs:
@@ -19,6 +20,7 @@ Open it while signed in to Claude (a free account works) and click **Allow use o
 - **Advisor** – type farm details or click an example, then *Get advice*.
 - **Test runner** – runs the 14 saved test inputs through the full pipeline.
 - **Prompt lab** – runs P2 versions v1, v2 and v3 on the same inputs and computes metrics.
+- **Sensors** – send an IoT soil-sensor reading and view a device's history (Render version).
 - **Prompts & knowledge base** – shows the final prompts and all 27 knowledge-base passages.
 
 ## Deploy on Render
@@ -28,6 +30,23 @@ The repo includes `render.yaml` and a dependency-free Node server (`server/serve
 1. On render.com: **New → Blueprint** (or **Web Service**) and pick this repo. Start command: `node server/server.js`.
 2. In the service's **Environment** tab set `GROQ_API_KEY` (free key from console.groq.com; never stored in the repo). Optional: `MODEL` (default `openai/gpt-oss-120b`, an open-weight model on Groq; `GEMINI_API_KEY` or `ANTHROPIC_API_KEY` also work), `LIMIT_PER_HOUR` (default 120 AI calls per visitor IP).
 3. Open the Render URL: the status pill shows "AI connected" when the key works.
+
+## Live data (weather and IoT sensors)
+
+On the Render site the Advisor can add live data before the prompts run:
+
+- **Weather forecast:** 4-day rain and temperature forecast for the farm's district from [Open-Meteo](https://open-meteo.com) (free, no key). Fetched by the browser; `/api/weather` on the server is the backup.
+- **Soil sensors:** type a device ID in *Soil sensor ID*; the latest reading for that device is added to the farmer's text, so P1 validates it like any other sensor data.
+
+A field device sends readings with one HTTP call:
+
+```bash
+curl -X POST https://avecagro.onrender.com/api/sensor -H "Content-Type: application/json" \
+  -d '{"device":"field-1","soil_moisture_pct":12,"soil_ph":7.4,"soil_temp_c":21}'
+```
+
+or with the included client (Python 3, no packages): `python tools/sensor_device.py --device field-1 --moisture 12 --ph 7.4 --every 15`.
+Readings are kept in memory (last 50 per device) and are cleared when the free Render server restarts. Set `SENSOR_TOKEN` in Render to require an `x-sensor-token` header. Drone imagery analysis is not built yet; drone observations can be typed in as text.
 
 ## How it works
 
@@ -41,7 +60,7 @@ The repo includes `render.yaml` and a dependency-free Node server (`server/serve
 
 Routing: invalid input or a farm outside India stops after P1; a new-crop plan runs P2 → P3 → P4 (watch-list); a standing crop with a problem runs P4 only.
 
-Model: Claude, called through the Claude artifact runtime (`sample` API, model tier "default"). No API key is stored anywhere in this repository.
+Model: Claude through the artifact runtime on claude.ai; gpt-oss-120b on Groq on the Render site. No API key is stored anywhere in this repository.
 
 ## Repository layout
 

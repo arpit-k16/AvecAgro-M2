@@ -34,3 +34,10 @@
 - Fixed "Request too large ... tokens per minute (TPM): Limit 8000, Requested 9186": Groq counts max_tokens toward the per-minute limit; the server now sizes max_tokens so each request fits the limit.
 - Fixed Prompt lab "Server error 502": AI calls are now queued one at a time and paced with Groq's x-ratelimit headers; waits are capped so Render never drops the request; the page retries automatically on 429/502/503.
 - The server now lists the models the key can use at startup and picks the best one for the free tier (shown in the status pill and /api/health).
+
+## 2026-11-23 — Live data module (weather + IoT soil sensors)
+- Live weather: the Advisor fetches a 4-day forecast for the farm's district from Open-Meteo (free, no key). The browser fetches it directly, because Render's shared IP hits Open-Meteo's daily limit; `/api/weather` on the server is the backup. The forecast is added to the farm profile before P2–P4 and shown as day tiles in a Live data card.
+- IoT soil-sensor feed: `POST /api/sensor` accepts readings (soil moisture, pH, soil/air temperature, humidity, EC, N/P/K) from a field device; `GET /api/sensor?device=` returns the latest reading and history. Out-of-range values are flagged. Optional `SENSOR_TOKEN` env var requires an `x-sensor-token` header.
+- New Sensors tab to send a reading by hand and view a device's history; Advisor has a "Soil sensor ID" box and a "Use the live weather forecast" switch. A new "Live data" step appears first in the progress bar.
+- `tools/sensor_device.py`: standard-library client a Raspberry Pi / ESP gateway can run to post readings every N minutes.
+- Test runner does not use live data, so saved test results stay reproducible. Drone imagery analysis is not built (drone observations can still be typed in as text).

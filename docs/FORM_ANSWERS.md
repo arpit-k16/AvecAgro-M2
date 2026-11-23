@@ -22,8 +22,8 @@ Every number below matches the Milestone 2 PDF.
 | 16 | Upload supporting document | docs/AvecAgro_BMC.pdf |
 | 17 | Number of test inputs | 14 |
 | 18 | Number of prompt versions | 3 |
-| 19 | Prototype status | Some modules working (7 of 8 modules working; "Live IoT / weather / drone data feeds" is Not started) |
-| 20 | Names of working modules | Intake & Validation (P1)<br>Knowledge retrieval (RAG)<br>Crop Recommendation (P2)<br>Farm Plan & Calendar (P3)<br>Pest Alert & Advisor (P4)<br>Multilingual output<br>Web app UI |
+| 19 | Prototype status | Some modules working (8 modules working; live weather and IoT soil-sensor feeds now work, drone imagery analysis is not built. Choose "All modules working" only if your form lists weather/IoT as the module) |
+| 20 | Names of working modules | Intake & Validation (P1)<br>Knowledge retrieval (RAG)<br>Crop Recommendation (P2)<br>Farm Plan & Calendar (P3)<br>Pest Alert & Advisor (P4)<br>Multilingual output<br>Web app UI<br>Live weather forecast (Open-Meteo)<br>IoT soil-sensor feed (/api/sensor) |
 | 21 | Upload Milestone 2 PDF | docs/M2_PE-B49-23_AvecAgro.pdf |
 | 22 | Main task of each member | S24CSEU1793 – Arpit Kumar – P2 prompt v1–v3 iteration, prompt lab, M2 report<br>S24CSEU0499 – Shikhar Bhandari – P1 intake & validation prompt, edge/invalid tests 7–14<br>S24CSEU0831 – Devang Kumar Bharti – web app, pipeline & retriever code, prototype publishing<br>S24CSEU0500 – Shikhar Shukla – knowledge base (RAG), P3 farm-plan prompt, RAG & I/O diagrams<br>S24CSEU0070 – Lakshay Bansal – P4 pest prompt, normal tests 1–6, screenshots, reel, BMC |
 | 23 | Anything the evaluator should know | No login needed. The free Render instance may take up to 1 minute to wake on first visit. Advisor tab: click an example and "Get advice". Measured results were produced with Claude; the public site runs the same prompts on gpt-oss-120b (Groq). |
