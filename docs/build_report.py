@@ -73,7 +73,7 @@ h = f"""<div class="cover"><div style="font-size:11pt;color:#555">SCSE4041 Mini 
 <tr><td>Batch</td><td>B49 - B64</td></tr>
 <tr><td>Faculty</td><td>Ankit Vijay Bansal</td></tr>
 <tr><td>Team members</td><td>{'<br>'.join(f'{esc(n)} — {e}' for n, e in team)}</td></tr>
-<tr><td>Prototype link</td><td>{esc(links['prototype'])} (public, no login)<br><span class="small">Also on claude.ai: {esc(links['prototype_claude'])}</span></td></tr>
+<tr><td>Prototype link</td><td>{esc(links['prototype'])} (public, no login)</td></tr>
 <tr><td>Repository / folder link</td><td>{esc(links['repository'])}</td></tr>
 <tr><td>Reel link</td><td>{esc(links['reel'])}</td></tr>
 <tr><td>Main AI tool and model</td><td>Claude (Anthropic) for all measured tests and the prompt lab; the public no-login deployment on Render runs the same prompts on the open-weight model gpt-oss-120b via Groq</td></tr>
@@ -139,7 +139,7 @@ for pid, name, path, step, purpose, vars_, nex, fmt, samp in sheets:
 # ---------- Section 3 ----------
 h += """<h1>3. Implementation</h1>
 <h2>What is built</h2>
-<p>A single-page web app (published as a Claude artifact) containing: the 4-prompt pipeline with routing and JSON validation; a retriever over 27 curated agronomy passages (tag + keyword scoring, forced inclusion of rule passages); farmer-facing result cards (profile, crop cards with sources, calendar table, pest alert); a <b>Test runner</b> that runs all 14 test inputs and logs full traces to the app database; a <b>Prompt lab</b> that runs P2 v1/v2/v3 on the same inputs and computes metrics; and a <b>Prompts & knowledge base</b> tab showing every final prompt and passage. Prompts live as text files in the repository and <code>code/build.py</code> embeds them into the page, so the report, repository and app use the same prompt text.</p>
+<p>A single-page web app, deployed publicly on Render (no login), containing: the 4-prompt pipeline with routing and JSON validation; a retriever over 27 curated agronomy passages (tag + keyword scoring, forced inclusion of rule passages); farmer-facing result cards (profile, crop cards with sources, calendar table, pest alert); a <b>Test runner</b> that runs all 14 test inputs and logs full traces to the app database; a <b>Prompt lab</b> that runs P2 v1/v2/v3 on the same inputs and computes metrics; and a <b>Prompts & knowledge base</b> tab showing every final prompt and passage. Prompts live as text files in the repository and <code>code/build.py</code> embeds them into the page, so the report, repository and app use the same prompt text.</p>
 <h2>Module status</h2>
 <table><tr><th>Module</th><th>What it does</th><th>Status</th><th>Notes</th></tr>
 <tr><td>Intake & Validation (P1)</td><td>Free text → profile JSON; invalid / non-India / impossible-value checks; clarifying questions</td><td>Working</td><td>14/14 runs valid JSON; caught 'idk', off-topic, Nebraska, pH 15, 90 °C, 85% vs cracked soil</td></tr>
@@ -148,8 +148,10 @@ h += """<h1>3. Implementation</h1>
 <tr><td>Farm Plan & Calendar (P3)</td><td>6–8 window calendar; rain and sensor-aware irrigation; Soil-Health-Card-based nutrients</td><td>Working</td><td>Postponed irrigation in all rain-forecast tests (1, 8)</td></tr>
 <tr><td>Pest Alert & Advisor (P4)</td><td>Alert level, likely pests, IPM order, no doses, drone suitability, expert contact</td><td>Working</td><td>Identified pink bollworm, fall armyworm, aphid, brown planthopper; refused dose + yield guarantee</td></tr>
 <tr><td>Multilingual output</td><td>Answers in farmer's language (English / Hindi / Hinglish) or chosen language</td><td>Working</td><td>Hinglish verified in test 7; Hindi (Devanagari) selectable</td></tr>
-<tr><td>Web app UI</td><td>Advisor, Test runner, Prompt lab, Prompts & KB tabs</td><td>Working</td><td>No login on Render (gpt-oss-120b via Groq); claude.ai version needs a Claude sign-in</td></tr>
-<tr><td>Live IoT / weather / drone data feeds</td><td>Pull sensor, IMD forecast and drone imagery automatically</td><td>Not started</td><td>Currently typed in by the farmer as text; planned for Milestone 3</td></tr>
+<tr><td>Web app UI</td><td>Advisor, Test runner, Prompt lab, Sensors, Prompts & KB tabs</td><td>Working</td><td>No login on Render (gpt-oss-120b via Groq)</td></tr>
+<tr><td>Live weather forecast</td><td>4-day rain and temperature forecast for the farm's district (Open-Meteo, no key) added to the profile before P2–P4</td><td>Working</td><td>Render version only; Gorakhpur run: P3 irrigation followed the dry forecast</td></tr>
+<tr><td>IoT soil-sensor feed</td><td>Devices POST readings to <code>/api/sensor</code>; the Advisor adds the latest reading for a sensor ID; out-of-range values flagged</td><td>Working</td><td>Readings kept in server memory (cleared on restart); device client <code>tools/sensor_device.py</code></td></tr>
+<tr><td>Drone imagery analysis</td><td>Read drone images and map crop stress</td><td>Not started</td><td>Drone observations can be typed in as text; planned for Milestone 3</td></tr>
 </table>
 <h2>Public deployment and cross-model check</h2>
 <p>The app is deployed at <b>https://avecagro.onrender.com</b> (Render, free plan). <code>server/server.js</code> serves the page and forwards each prompt to Groq; the key is stored only as a Render environment variable. Groq's free tier allows too few tokens per minute to repeat the full 14-test suite before the deadline, so all measured results in this report come from Claude, and we spot-checked the Render deployment (gpt-oss-120b) on 22 Nov 2026:</p>
@@ -159,8 +161,14 @@ h += """<h1>3. Implementation</h1>
 <tr><td>13 (dose + guarantee), first run</td><td>P1 marked the whole input invalid because it asked for a dose, so no pest advice was given</td><td class="fail">Fail</td></tr>
 <tr><td>13, after P1 fix</td><td>Brown planthopper (high), alert warning; declined the chlorpyrifos dose and the 30 q/acre guarantee</td><td class="pass">Pass</td></tr>
 <tr><td>14 (pH 15, 90 °C)</td><td>Both impossible values flagged and set to null; Wheat, Chickpea, Lentil with valid citations; all 4 steps valid JSON</td><td class="pass">Pass</td></tr>
-<tr><td>1 (full 4-step run)</td><td>Did not finish: stopped by the Groq free-tier per-minute token limit</td><td>Not completed</td></tr></table>
+<tr><td>1 (full 4-step run)</td><td>First attempt stopped by the Groq free-tier per-minute token limit; after the server fix (request sizing and pacing) all 4 steps completed in about 70 s</td><td class="pass">Completed</td></tr>
+<tr><td>Live data run (Gorakhpur, Hinglish)</td><td>Sensor reading (moisture 12%) and live forecast (no rain, 13–25 °C) added to the profile; P3 started with a light irrigation because of the 12% reading; answer in Hindi</td><td class="pass">Pass</td></tr></table>
 <p><b>P1 fix from this check:</b> rule 6 now says input that describes a farm stays valid even if it also asks for a dose or a guarantee; the later steps decline that part. The Claude results in Section 4 were obtained with the earlier wording.</p>
+<h2>Screenshots from the deployed app (avecagro.onrender.com, 23 Nov 2026)</h2>
+<figure>@@IMG:docs/screenshots/render_advisor_home.jpg@@<div class="cap">Advisor tab on Render: no login, status shows the connected model, live-weather switch and soil sensor ID.</div></figure>
+<figure>@@IMG:docs/screenshots/render_live_farm_profile.jpg@@<div class="cap">Live data run (Gorakhpur, Hinglish input): the latest soil-sensor reading and the Open-Meteo 4-day forecast are added to the farm profile.</div></figure>
+<figure>@@IMG:docs/screenshots/render_live_season_plan.jpg@@<div class="cap">Same run: the season plan (in Hindi) starts with a light irrigation because the sensor shows 12% moisture, and notes that no rain is forecast.</div></figure>
+<figure>@@IMG:docs/screenshots/render_sensors_tab.jpg@@<div class="cap">Sensors tab: readings sent to <code>/api/sensor</code> and the device history with range checks.</div></figure>
 <h2>Prompt iteration log (P2 Crop Recommendation)</h2>
 <p class="small">Measured in the Prompt lab on 22 Nov 2026: each version ran on tests 1, 2, 4, 7 and 14, plus 2 repeats of test 1 (7 runs per version). v2 and v3 received the same P1 profile and the same retrieved passages. Raw outputs: <code>test-data/prompt_lab_results.json</code>, <code>test-data/sample_runs.md</code>.</p>
 <table><tr><th style="width:7%">Version</th><th style="width:33%">What changed</th><th style="width:22%">Why it was changed</th><th>Result after the change</th></tr>
@@ -172,7 +180,7 @@ h += """<h1>3. Implementation</h1>
 for v in ["v1/P2_crop_recommendation_v1.txt", "v2/P2_crop_recommendation_v2.txt", "v3/P2_crop_recommendation_v3.txt"]:
     p = prompt("prompts/" + v)
     h += f"<h3>Full text — {esc(p['META'].strip().splitlines()[0].replace('Prompt: ', ''))}</h3><b>System prompt</b><pre>{esc(p['SYSTEM'].strip())}</pre><b>User prompt template</b><pre>{esc(p['USER'].strip())}</pre>"
-h += f'<figure>{img("docs/screenshots/prompt_lab_summary.jpg", "80%")}<div class="cap">Prompt lab summary computed by the app after the v1/v2/v3 runs (22 Nov 2026).</div></figure>'
+h += f'<figure>{img("docs/screenshots/render_prompt_lab_summary.jpg", "80%")}<div class="cap">Prompt lab re-run on the Render app (gpt-oss-120b, 23 Nov 2026): the same pattern as the table above — v1 0/7 JSON and 0/7 citations, v2 and v3 7/7, v3 shortest. Times include waiting for the Groq free-tier limit, so they are not comparable with the Claude times.</div></figure>'
 
 # ---------- Section 4 ----------
 h += """<h1>4. Demonstration and testing</h1>
@@ -185,16 +193,16 @@ for t in tests:
     short = next(x["short"] for x in json.loads((R / "test-data/test_inputs.json").read_text()) if x["no"] == t["no"])
     h += f"<tr><td>{t['no']}</td><td>{esc(short)}</td><td>{t['type']}</td><td>{esc(t['expected'])}</td><td>{esc(t['actual'])}{note}</td><td class='{cls}'>{t['result']}</td></tr>"
 h += "</table><p><b>Result: 13 Pass, 1 Fail.</b></p><h2>Screenshots of real runs</h2>"
-for f, cap in [("test14_profile_warnings.jpg", "Test 14 (Edge) — P1 flags pH 15 and 90 °C as impossible, sets them to null and asks for a soil test."),
-               ("test13_pest_alert.jpg", "Test 13 (Edge) — P4 identifies likely brown planthopper and declines the chlorpyrifos dose and the 30 q/acre guarantee (re-run in the Advisor tab)."),
-               ("test07_hinglish_crops.jpg", "Test 7 (Edge) — Hinglish input answered in Hinglish; only 2 crops because the lentil passage was not retrieved (the failed test).")]:
+for f, cap in [("render_test14_profile_warnings.jpg", "Test 14 (Edge) on the Render app — P1 flags pH 15 and 90 °C as impossible, sets them to null and asks for missing details."),
+               ("render_test13_pest_alert.jpg", "Test 13 (Edge) on the Render app — P4 identifies likely brown planthopper, gives IPM steps and declines the chlorpyrifos dose and the 30 q/acre guarantee."),
+               ("render_hinglish_crops.jpg", "Hinglish input (Gorakhpur) on the Render app — crops answered in Hindi with knowledge-base sources; lentil is included in this run.")]:
     h += f'<figure>{img("docs/screenshots/" + f, "86%")}<div class="cap">{cap}</div></figure>'
 h += """<h2>Known limitations and what we will try next</h2>
 <table><tr><th>Limitation</th><th>What we will try next</th></tr>
 <tr><td>Keyword retrieval can miss a relevant passage (test 7 lost the lentil passage because UP-specific paddy/BPH passages scored higher; test 14 missed the wheat yellow-rust passage because MP is not in its state list).</td><td>Add crop-rotation tags and embedding-based retrieval, retrieve per candidate crop, and grow the knowledge base by state with expert review.</td></tr>
 <tr><td>When key facts are missing (test 9: season unknown) the pipeline still produces a full generic calendar.</td><td>Make P1 confidence gate P3: if season or crop status is unknown, show the clarifying questions first and plan only after the farmer answers.</td></tr>
 <tr><td>P1 sometimes puts context into the wrong field (test 1: “borewell is shared” stored as an observed problem, so P4 discussed it).</td><td>Add an explicit “constraints” field and a second example to P1.</td></tr>
-<tr><td>Sensor, weather and drone data are typed in by the farmer; nothing is read live, and the knowledge base (27 passages) is written by the team from public guidance, not yet validated by an agronomist.</td><td>Connect a real soil-moisture sensor feed and IMD forecast API in Milestone 3; get KVK / faculty review of every passage.</td></tr>
+<tr><td>Live weather and soil-sensor feeds work, but sensor readings are kept only in server memory and drone imagery is not analysed; the knowledge base (27 passages) is written by the team from public guidance, not yet validated by an agronomist.</td><td>Milestone 3: store readings in a database, test with a real ESP32 soil probe, add drone-image analysis, and get KVK / faculty review of every passage.</td></tr>
 </table>
 """
 
@@ -227,6 +235,7 @@ h += """<h1>7. Team contribution</h1>
 </table>
 """
 
+h = re.sub(r"@@IMG:([^@]+)@@", lambda m: img(m.group(1), "80%"), h)
 doc = f"<!DOCTYPE html><html><head><meta charset='utf-8'><style>{css}</style></head><body>{h}</body></html>"
 (D / "report.html").write_text(doc, encoding="utf-8")
 out = D / "M2_PE-B49-23_AvecAgro.pdf"

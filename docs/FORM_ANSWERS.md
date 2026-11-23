@@ -16,7 +16,7 @@ Every number below matches the Milestone 2 PDF.
 | 10 | Number of prompts | 4 |
 | 11 | Prototype link | https://avecagro.onrender.com (no login needed) |
 | 12 | Repository / folder link | https://github.com/arpit-k16/AvecAgro-M2 |
-| 13 | Reel link | your Drive / unlisted YouTube link |
+| 13 | Reel link | https://drive.google.com/file/d/14cfhjFbPGN_8EvaeNEtN4WtOqo4kPj-e/view?usp=sharing |
 | 14 | Reel length (seconds) | 127 |
 | 15 | Supporting document type | Business Model Canvas (BMC) |
 | 16 | Upload supporting document | docs/AvecAgro_BMC.pdf |
